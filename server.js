@@ -1,3 +1,4 @@
+import * as db from './dbConnection.js';
 import express from 'express';
 import cors from 'cors';
 
@@ -18,7 +19,4 @@ app.get('/api/test', (req, res) => {
 });
 
 // Start server
-const PORT = 8080;
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+app.listen(8080);
