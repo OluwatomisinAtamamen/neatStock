@@ -27,15 +27,19 @@ a {
 }
 
 a:hover {
-  color: darken(var(--primary), 10%);
+  color: var(--primary);
 }
 
+/* Remove flex centering from body so that the navbar appears at the top */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+}
+
+/* Optional: style for home page container */
+.home {
+  padding-top: 1rem; /* Adjust as needed */
 }
 
 h1 {
