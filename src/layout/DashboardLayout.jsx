@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar.jsx';
 
-function App() {
+function DashboardLayout() {
   const [openSidebarToggle, setOpenSidebarToggle] = useState(false);
 
   const OpenSidebar = () => {
@@ -19,4 +19,4 @@ function App() {
   );
 }
 
-export default App;
+export default DashboardLayout;

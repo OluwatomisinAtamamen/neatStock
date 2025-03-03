@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
-import {BsCart3, BsGrid1X2Fill, BsFillArchiveFill, BsFillGrid3X3GapFill, BsPeopleFill, 
-  BsListCheck, BsMenuButtonWideFill, BsFillGearFill} from 'react-icons/bs';
+import { Link } from 'react-router-dom';
+import {BsCart3, BsGrid1X2Fill, BsFillArchiveFill, BsMenuButtonWideFill, BsFillGearFill, BsSearch} from 'react-icons/bs';
 
 function Sidebar({openSidebarToggle, OpenSidebar}) {
   return (
@@ -15,39 +15,29 @@ function Sidebar({openSidebarToggle, OpenSidebar}) {
       
       <ul className="space-y-4">
         <li>
-          <a href="#" className="flex items-center text-text hover:text-primary">
+          <Link to="/dashboard" className="flex items-center text-text hover:text-primary">
             <BsGrid1X2Fill className="mr-3" /> Dashboard
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="#" className="flex items-center text-text hover:text-primary">
-            <BsFillArchiveFill className="mr-3" /> Products
-          </a>
+          <Link to="/search" className="flex items-center text-text hover:text-primary">
+            <BsSearch className="mr-3" /> Search
+          </Link>
         </li>
         <li>
-          <a href="#" className="flex items-center text-text hover:text-primary">
-            <BsFillGrid3X3GapFill className="mr-3" /> Categories
-          </a>
+          <Link to="/items" className="flex items-center text-text hover:text-primary">
+            <BsFillArchiveFill className="mr-3" /> Items
+          </Link>
         </li>
         <li>
-          <a href="#" className="flex items-center text-text hover:text-primary">
-            <BsPeopleFill className="mr-3" /> Customers
-          </a>
-        </li>
-        <li>
-          <a href="#" className="flex items-center text-text hover:text-primary">
-            <BsListCheck className="mr-3" /> Inventory
-          </a>
-        </li>
-        <li>
-          <a href="#" className="flex items-center text-text hover:text-primary">
+          <Link to="/reports" className="flex items-center text-text hover:text-primary">
             <BsMenuButtonWideFill className="mr-3" /> Reports
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="#" className="flex items-center text-text hover:text-primary">
+          <Link to="/settings" className="flex items-center text-text hover:text-primary">
             <BsFillGearFill className="mr-3" /> Settings
-          </a>
+          </Link>
         </li>
       </ul>
     </aside>
