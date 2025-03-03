@@ -1,45 +1,30 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import './index.css'
+import './style/index.css'
 
-import Home from './pages/Home.jsx';
+import App from './layout/DashboardLayout.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Reports from './pages/Reports.jsx';
 import Settings from './pages/Settings.jsx';
-import Dashboard from './pages/Dashboard.jsx';
+import Home from './pages/Home.jsx';
 import ErrorPage from './pages/ErrorPage.jsx';
 
-const router = createBrowserRouter([{
+const router = createBrowserRouter([
+  {
     path: '/',
-    element: <Home />,
+    element: <App />, 
     errorElement: <ErrorPage />,
-  },
-  {
-    path: '/login',
-    element: <Login />, 
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/signup',
-    element: <Signup />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/reports',
-    element: <Reports />, 
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/settings',
-    element: <Settings />, 
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/dashboard',
-    element: <Dashboard />, 
-    errorElement: <ErrorPage />,
+    children: [
+      { index: true, element: <LandingPage /> },
+      { path: 'login', element: <Login /> },
+      { path: 'signup', element: <Signup /> },
+      { path: 'reports', element: <Reports /> },
+      { path: 'settings', element: <Settings /> },
+      { path: 'dashboard', element: <Home /> },
+    ]
   }
 ]);
 
@@ -47,4 +32,4 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <RouterProvider router={router} />
   </StrictMode>,
-)
+);

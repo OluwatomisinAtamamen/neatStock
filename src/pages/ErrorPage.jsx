@@ -6,7 +6,7 @@ export default function ErrorPage() {
         <h1>404</h1>
         <h2>Page not found</h2>
 
-        <Link to='/'>Go back to the home page</Link>
+        <Link to='/'>Go back to the landing page</Link>
       </section>
     );
 }

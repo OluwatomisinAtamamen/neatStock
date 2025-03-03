@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import '../registration.css';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -100,86 +99,97 @@ function Signup() {
       });
     }
   };
-
+  
   return (
-    <div className="login-container">
-      <Link to='/'>Home</Link>
-      <div className="login-card">
-        <h1>Signup</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+      <Link to='/' className="absolute top-4 left-4 text-primary hover:underline">Landing Page</Link>
+      <div className="bg-card p-8 rounded-lg shadow-md w-96 max-w-full">
+        <h1 className="text-2xl font-bold mb-6 text-center text-text">Signup</h1>
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="firstName">First Name:</label>
+          <div className="mb-4">
+            <label htmlFor="firstName" className="block mb-2 text-text">First Name:</label>
             <input 
               type="text" 
               id="firstName" 
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required 
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            {firstNameError && <p className="error">{firstNameError}</p>}
+            {firstNameError && <p className="text-red-600 text-sm mt-1">{firstNameError}</p>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="lastName">Last Name:</label>
+          <div className="mb-4">
+            <label htmlFor="lastName" className="block mb-2 text-text">Last Name:</label>
             <input 
               type="text" 
               id="lastName" 
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required 
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            {lastNameError && <p className="error">{lastNameError}</p>}
+            {lastNameError && <p className="text-red-600 text-sm mt-1">{lastNameError}</p>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="businessName">Business Name:</label>
+          <div className="mb-4">
+            <label htmlFor="businessName" className="block mb-2 text-text">Business Name:</label>
             <input 
               type="text" 
               id="businessName" 
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
               required 
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            {businessNameError && <p className="error">{businessNameError}</p>}
+            {businessNameError && <p className="text-red-600 text-sm mt-1">{businessNameError}</p>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="workEmail">Work Email:</label>
+          <div className="mb-4">
+            <label htmlFor="workEmail" className="block mb-2 text-text">Work Email:</label>
             <input 
               type="email" 
               id="workEmail" 
               value={workEmail}
               onChange={(e) => setWorkEmail(e.target.value)}
               required 
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            {emailError && <p className="error">{emailError}</p>}
+            {emailError && <p className="text-red-600 text-sm mt-1">{emailError}</p>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password:</label>
+          <div className="mb-4">
+            <label htmlFor="password" className="block mb-2 text-text">Password:</label>
             <input 
               type="password" 
               id="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required 
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            {passwordError && <p className="error">{passwordError}</p>}
+            {passwordError && <p className="text-red-600 text-sm mt-1">{passwordError}</p>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password:</label>
+          <div className="mb-4">
+            <label htmlFor="confirmPassword" className="block mb-2 text-text">Confirm Password:</label>
             <input 
               type="password" 
               id="confirmPassword" 
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required 
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            {confirmPasswordError && <p className="error">{confirmPasswordError}</p>}
+            {confirmPasswordError && <p className="text-red-600 text-sm mt-1">{confirmPasswordError}</p>}
           </div>
 
-          <button type="submit">Signup</button>
+          <button 
+            type="submit"
+            className="w-full bg-primary text-white p-3 rounded font-medium hover:bg-blue-700 transition-colors"
+          >
+            Signup
+          </button>
         </form>
       </div>
     </div>

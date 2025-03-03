@@ -50,3 +50,9 @@ Settings:
 - Stock Alert Levels
 - User Access
 - Backup Data
+
+
+
+To run;
+npm run dev
+npm run server
