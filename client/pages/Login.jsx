@@ -1,25 +1,25 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import axios from 'axios';
+import { AuthContext } from '../context/auth';
 
 function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  
-  // Error states
-  const [emailError, setEmailError] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [loginError, setLoginError] = useState('');
+  
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  // Validate email and password
   const validateInputs = () => {
     let isValid = true;
-    const emailRegex = /\S+@\S+\.\S+/;
     
-    if (!email.trim() || !emailRegex.test(email)) {
-      setEmailError('Please enter a valid email address.');
+    if (!username.trim()) {
+      setUsernameError('Please enter your username.');
       isValid = false;
     } else {
-      setEmailError('');
+      setUsernameError('');
     }
 
     if (!password || password.length < 6) {
@@ -32,48 +32,45 @@ function Login() {
     return isValid;
   };
 
-  const navigate = useNavigate();
-  axios.defaults.withCredentials = true;
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateInputs()) {
-      axios.post('data/users/login', { email, password })
-        .then((response) => {
-
-          if (response.status === 200) {
-            navigate('/dashboard');
-            console.log('Logged in');
-            console.log(response.data);
-          }
-        })
-        .catch((error) => {
-          if (error.response && error.response.status === 401) {
-            setPasswordError('Invalid email or password');
-          } else {
-            console.error(error);
-          }
-        });
-      console.log({ email, password });
+      setLoginError('');
+      const result = await login(username, password);
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setLoginError(result.message);
+      }
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <Link to='/' className="absolute top-4 left-4 text-primary hover:underline">Landing Page</Link>
+      <Link to='/' className="absolute top-4 left-4 text-primary hover:underline">
+        Landing Page
+      </Link>
       <div className="bg-card p-8 rounded-lg shadow-md w-96 max-w-full">
         <h1 className="text-2xl font-bold mb-6 text-center text-text">Login</h1>
+        
+        {loginError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {loginError}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} noValidate>
           <div className="mb-4">
-            <label htmlFor="email" className="block mb-2 text-text">Email:</label>
+            <label htmlFor="username" className="block mb-2 text-text">Username:</label>
             <input 
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required 
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            {emailError && <p className="text-red-600 text-sm mt-1">{emailError}</p>}
+            {usernameError && <p className="text-red-600 text-sm mt-1">{usernameError}</p>}
           </div>
 
           <div className="mb-4">
