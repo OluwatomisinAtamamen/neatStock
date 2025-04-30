@@ -4,8 +4,7 @@ export function validateSignupInput(data) {
       lastName,
       businessName,
       businessEmail,
-      username,
-      password,
+      username
     } = data;
   
     if (!firstName || typeof firstName !== 'string' || firstName.trim() === '') {
@@ -26,9 +25,6 @@ export function validateSignupInput(data) {
     }
     if (!username || typeof username !== 'string' || username.trim() === '') {
       return { isValid: false, message: 'Username is required' };
-    }
-    if (!password || typeof password !== 'string' || password.length < 6) {
-      return { isValid: false, message: 'Password must be at least 6 characters long' };
     }
     return { isValid: true };
   }

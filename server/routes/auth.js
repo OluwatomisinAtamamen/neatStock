@@ -3,21 +3,20 @@ import {
   signup,
   login,
   logout,
-  getAuthStatus
+  getAuthStatus,
+  handlePaymentSuccess,
+  verifyPayment,
+  completeSignup
 } from '../controllers/authController.js';
 
 const router = Router();
 
-// Signup route
 router.post('/signup', signup);
-
-// Login route
 router.post('/login', login);
-
-// Logout route
 router.post('/logout', logout);
-
-// Auth status route
 router.get('/auth-status', getAuthStatus);
+router.get('/payment-success', handlePaymentSuccess);
+router.get('/verify-payment', verifyPayment);
+router.post('/complete-signup', completeSignup);
 
 export default router;

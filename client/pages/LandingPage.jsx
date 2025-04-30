@@ -216,37 +216,7 @@ function LandingPage() {
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Support</h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <a href="#" className="text-base text-gray-300 hover:text-white">Documentation</a>
-                </li>
-                <li>
-                  <a href="#" className="text-base text-gray-300 hover:text-white">Contact</a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Company</h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <a href="#" className="text-base text-gray-300 hover:text-white">About Team</a>
-                </li>
-                <li>
-                  <a href="#" className="text-base text-gray-300 hover:text-white">Blog</a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Legal</h3>
-              <ul className="mt-4 space-y-4">
-                <li>
-                  <a href="#" className="text-base text-gray-300 hover:text-white">Privacy</a>
-                </li>
-                <li>
-                  <a href="#" className="text-base text-gray-300 hover:text-white">Terms</a>
-                </li>
-              </ul>
+              <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase"><a href="mailto:up2136848@myport.ac.uk">Contact</a></h3>
             </div>
           </div>
           <div className="mt-12 border-t border-gray-700 pt-8">

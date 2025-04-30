@@ -5,6 +5,7 @@ import pgSession from 'connect-pg-simple';
 import cookieParser from 'cookie-parser';
 import { pool } from './dbConnection.js';
 import authRoutes from './routes/auth.js';
+import { handleStripeWebhook } from './controllers/authController.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -17,6 +18,16 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Raw body parser for Stripe webhooks
+app.post(
+  '/webhook',
+  express.raw({ 
+    type: (req) => req.headers['content-type']?.startsWith('application/json') 
+  }),
+  handleStripeWebhook
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -35,7 +46,7 @@ app.use(session({
     maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production'
+    secure: process.env.NODE_ENV
   }
 }));
 

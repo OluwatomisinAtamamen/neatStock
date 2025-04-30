@@ -16,6 +16,7 @@ import Home from './pages/Home.jsx';
 import Items from './pages/Items.jsx';
 import Search from './pages/Search.jsx';
 import ErrorPage from './pages/ErrorPage.jsx';
+import PaymentSuccess from './pages/PaymentSuccess.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -27,6 +28,7 @@ createRoot(document.getElementById('root')).render(
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
           </Route>
           
           {/* Protected routes - only accessible when authenticated */}

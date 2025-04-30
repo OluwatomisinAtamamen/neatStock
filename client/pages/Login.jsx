@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from '../context/auth';
+import { HiHome } from 'react-icons/hi';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -30,7 +31,7 @@ function Login() {
     }
 
     return isValid;
-  };
+    };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,8 +48,8 @@ function Login() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <Link to='/' className="absolute top-4 left-4 text-primary hover:underline">
-        Landing Page
+      <Link to='/' className="absolute top-4 left-4 text-primary hover:underline flex items-center">
+        <HiHome className="text-2xl" />
       </Link>
       <div className="bg-card p-8 rounded-lg shadow-md w-96 max-w-full">
         <h1 className="text-2xl font-bold mb-6 text-center text-text">Login</h1>

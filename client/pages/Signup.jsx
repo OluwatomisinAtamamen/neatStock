@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { HiHome } from 'react-icons/hi';
 
 function Signup() {
   // Field states
@@ -9,8 +10,6 @@ function Signup() {
   const [businessName, setBusinessName] = useState('');
   const [businessEmail, setBusinessEmail] = useState('');
   const [username, setUsername] = useState('');      
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Error states
   const [firstNameError, setFirstNameError] = useState('');
@@ -18,8 +17,6 @@ function Signup() {
   const [businessNameError, setBusinessNameError] = useState('');
   const [businessEmailError, setBusinessEmailError] = useState('');
   const [usernameError, setUsernameError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   const validateInputs = () => {
     let isValid = true;
@@ -60,24 +57,9 @@ function Signup() {
       setUsernameError('');
     }
     
-    if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters long.');
-      isValid = false;
-    } else {
-      setPasswordError('');
-    }
-    
-    if (confirmPassword !== password) {
-      setConfirmPasswordError('Passwords do not match.');
-      isValid = false;
-    } else {
-      setConfirmPasswordError('');
-    }
-    
     return isValid;
   };
 
-  const navigate = useNavigate();
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateInputs()) {
@@ -87,38 +69,31 @@ function Signup() {
         businessName,
         businessEmail,
         username,
-        password
       })
-        .then((response) => {
-          console.log(response.data);
-          if (response.status === 200){
-            navigate('/login');
-          } else if (response.status === 400) {
-            alert('Email or username already in use');
-          }
-        })
-        .catch((error) => {
-          if (error.response && error.response.status === 400) {
-            setBusinessEmailError('Business email or username already in use');
-          } else {
-            console.error(error);
-          }
-        });
-      
-      console.log({
-        firstName,
-        lastName,
-        businessName,
-        businessEmail,
-        username,
-        password,
+      .then((response) => {
+        if (response.status === 200 && response.data.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = response.data.url;
+        } else if (response.status === 400) {
+          setBusinessEmailError('Email or username already in use');
+        }
+      })
+      .catch((error) => {
+        if (error.response && error.response.status === 400) {
+          setBusinessEmailError('Business email or username already in use');
+        } else {
+          console.error(error);
+        }
       });
     }
   };
   
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <Link to='/' className="absolute top-4 left-4 text-primary hover:underline">Landing Page</Link>
+      <Link to='/' className="absolute top-4 left-4 text-primary hover:underline flex items-center">
+        <HiHome className="text-2xl" />
+      </Link>
+      
       <div className="bg-card p-8 rounded-lg shadow-md w-96 max-w-full">
         <h1 className="text-2xl font-bold mb-6 text-center text-text">Signup</h1>
         <form onSubmit={handleSubmit}>
@@ -155,20 +130,6 @@ function Signup() {
             <input type="text" id="username" value={username} onChange={(e) => setUsername(e.target.value)}
               required className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary" />
             {usernameError && <p className="text-red-600 text-sm mt-1">{usernameError}</p>}
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="password" className="block mb-2 text-text">Password:</label>
-            <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              required className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary" />
-            {passwordError && <p className="text-red-600 text-sm mt-1">{passwordError}</p>}
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="confirmPassword" className="block mb-2 text-text">Confirm Password:</label>
-            <input type="password" id="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-              required className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary" />
-            {confirmPasswordError && <p className="text-red-600 text-sm mt-1">{confirmPasswordError}</p>}
           </div>
 
           <button type="submit" className="w-full bg-primary text-white p-3 rounded font-medium hover:bg-blue-700 transition-colors">

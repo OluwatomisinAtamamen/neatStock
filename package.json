@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "nodemon server/server.js",
+    "server:only": "nodemon server/server.js",
+    "stripe:listen": "stripe listen --forward-to localhost:8080/webhook --events checkout.session.completed,invoice.paid,invoice.payment_failed,customer.subscription.updated",
+    "server": "concurrently \"npm run server:only\" \"npm run stripe:listen\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
-  },
+},
   "dependencies": {
+    "@stripe/react-stripe-js": "^3.6.0",
+    "@stripe/stripe-js": "^7.0.0",
     "@tanstack/react-query": "^5.66.0",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
@@ -38,6 +42,7 @@
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.15",
+    "concurrently": "^9.1.2",
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",
