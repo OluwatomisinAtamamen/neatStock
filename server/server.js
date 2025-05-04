@@ -7,6 +7,13 @@ import { pool } from './dbConnection.js';
 import authRoutes from './routes/auth.js';
 import { handleStripeWebhook } from './controllers/authController.js';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import locationRoutes from './routes/locations.js';
+
+// Get __dirname equivalent in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
@@ -30,6 +37,8 @@ app.post(
 
 app.use(express.json());
 app.use(cookieParser());
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const PostgreSqlStore = pgSession(session);
 const sessionStore = new PostgreSqlStore({
@@ -40,30 +49,18 @@ const sessionStore = new PostgreSqlStore({
 app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET,
-  resave: false,
+  resave: true,
   saveUninitialized: false,
   cookie: {
     maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV
+    secure: process.env.NODE_ENV === 'production'
   }
 }));
 
 // Mount the auth routes under /data/users
 app.use('/data/users', authRoutes);
-
-// You can add additional route modules here, for example:
-// import inventoryRoutes from './routes/inventory.js';
-// app.use('/data/inventory', inventoryRoutes);
-
-// Fallback protected route example
-app.get('/data/protected', (req, res) => {
-  if (req.session.userId) {
-    res.json({ message: 'This is protected data', userId: req.session.userId });
-  } else {
-    res.status(401).json({ message: 'Not authenticated' });
-  }
-});
+app.use('/data/locations', locationRoutes);
 
 app.listen(8080);

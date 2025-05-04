@@ -17,6 +17,8 @@ import Items from './pages/Items.jsx';
 import Search from './pages/Search.jsx';
 import ErrorPage from './pages/ErrorPage.jsx';
 import PaymentSuccess from './pages/PaymentSuccess.jsx';
+import Stocktake from './pages/Stocktake.jsx';
+import Locations from './pages/Locations.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -38,6 +40,8 @@ createRoot(document.getElementById('root')).render(
             <Route path="/items" element={<Items />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/stocktake" element={<Stocktake />} />
+            <Route path="/locations" element={<Locations />} />
           </Route>
           
           <Route path="*" element={<ErrorPage />} />
