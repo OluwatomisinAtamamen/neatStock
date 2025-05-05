@@ -16,7 +16,10 @@ export async function searchItems(req, res) {
       sortBy = 'name',
       sortDir = 'asc',
       page = 1,
-      limit = 20
+      limit = 20,
+      catalogId = null,           
+      inInventoryOnly = false, 
+      locationId = null 
     } = req.query;
 
     const offset = (page - 1) * limit;
@@ -30,7 +33,8 @@ export async function searchItems(req, res) {
           bi.item_id AS id,
           bi.item_name AS name,
           bi.sku,
-          NULL AS barcode,
+          bi.catalog_id,
+          pc.barcode,
           bi.quantity_in_stock AS quantity,
           bi.rsu_value,
           bi.min_stock_level,
@@ -38,17 +42,17 @@ export async function searchItems(req, res) {
           bi.cost_price,
           bi.unit_price,
           c.category_name,
-          NULL AS default_category,
           COALESCE(ARRAY_AGG(DISTINCT l.location_name) FILTER (WHERE l.location_name IS NOT NULL), ARRAY[]::text[]) as locations,
           COALESCE(ARRAY_AGG(DISTINCT il.quantity) FILTER (WHERE il.quantity IS NOT NULL), ARRAY[]::int[]) as location_quantities,
-          TRUE AS in_inventory
+          TRUE AS is_from_catalog
         FROM business_item bi
+        LEFT JOIN product_catalog pc ON bi.catalog_id = pc.catalog_id
         LEFT JOIN category c ON bi.category_id = c.category_id
         LEFT JOIN item_location il ON bi.item_id = il.item_id
         LEFT JOIN location l ON il.location_id = l.location_id
         WHERE bi.business_id = $1
           AND (LOWER(bi.item_name) LIKE LOWER($2) OR LOWER(bi.sku) LIKE LOWER($3))
-        GROUP BY bi.item_id, c.category_name
+        GROUP BY bi.item_id, c.category_name, pc.barcode
       ),
       catalog_items AS (
         SELECT
@@ -63,10 +67,9 @@ export async function searchItems(req, res) {
           NULL::numeric AS cost_price,
           NULL::numeric AS unit_price,
           NULL AS category_name,
-          pc.default_category,
           ARRAY[]::text[] AS locations,
           ARRAY[]::int[] AS location_quantities,
-          FALSE AS in_inventory
+          FALSE AS is_from_catalog
         FROM product_catalog pc
         WHERE (LOWER(pc.name) LIKE LOWER($2) OR LOWER(pc.barcode) LIKE LOWER($3))
           AND NOT EXISTS (
@@ -84,23 +87,40 @@ export async function searchItems(req, res) {
     // Filtering
     let whereClause = '';
     if (category) {
-      whereClause += ` AND (category_name = $${++paramIndex} OR default_category = $${paramIndex})`;
+      whereClause += ` AND (category_name = $${++paramIndex}`;
       params.push(category);
     }
+    
     if (location) {
-      whereClause += ` AND (in_inventory = FALSE OR (
-        in_inventory = TRUE AND $${++paramIndex} = ANY(locations)
-      ))`;
+      whereClause += ` AND ($${++paramIndex} = ANY(locations) OR array_length(locations, 1) IS NULL)`;
       params.push(location);
     }
+    
     if (stockStatus === 'in-stock') {
-      whereClause += ` AND in_inventory = TRUE AND quantity > 0`;
+      whereClause += ` AND quantity > 0`;
     } else if (stockStatus === 'low-stock') {
-      whereClause += ` AND in_inventory = TRUE AND quantity <= min_stock_level AND quantity > 0`;
+      whereClause += ` AND quantity > 0 AND quantity <= min_stock_level`;
     } else if (stockStatus === 'out-of-stock') {
-      whereClause += ` AND in_inventory = TRUE AND quantity = 0`;
+      whereClause += ` AND quantity = 0`;
     } else if (stockStatus === 'catalog-only') {
-      whereClause += ` AND in_inventory = FALSE`;
+      whereClause += ` AND NOT is_from_catalog`;
+    }
+
+    if (catalogId) {
+        whereClause += ` AND (is_from_catalog = FALSE AND catalog_id = $${++paramIndex})`;
+        params.push(catalogId);
+    }
+    
+    if (inInventoryOnly === 'true' || inInventoryOnly === true) {
+        whereClause += ` AND is_from_catalog = TRUE`;
+    }
+    
+    if (locationId) {
+      whereClause += ` AND (is_from_catalog = TRUE AND EXISTS (
+          SELECT 1 FROM item_location il 
+          WHERE il.item_id = bi.item_id AND il.location_id = $${++paramIndex}
+      ))`;
+      params.push(locationId);
     }
 
     // Final SELECT
@@ -113,9 +133,9 @@ export async function searchItems(req, res) {
     if (sortBy === 'name') {
       sqlQuery += ` ORDER BY name ${sortDir === 'desc' ? 'DESC' : 'ASC'}`;
     } else if (sortBy === 'category') {
-      sqlQuery += ` ORDER BY COALESCE(category_name, default_category) ${sortDir === 'desc' ? 'DESC' : 'ASC'}`;
+      sqlQuery += ` ORDER BY COALESCE(category_name, 'Uncategorised') ${sortDir === 'desc' ? 'DESC' : 'ASC'}`;
     } else if (sortBy === 'stock') {
-      sqlQuery += ` ORDER BY in_inventory DESC, quantity ${sortDir === 'desc' ? 'DESC' : 'ASC'}`;
+      sqlQuery += ` ORDER BY quantity ${sortDir === 'desc' ? 'DESC' : 'ASC'}, name ASC`;
     }
 
     // Pagination
@@ -125,7 +145,7 @@ export async function searchItems(req, res) {
     // Query execution
     const result = await pool.query(sqlQuery, params);
 
-    // Count query for pagination
+    // Count query for pagination - fixed to include all necessary columns
     const countParams = params.slice(0, params.length - 2);
     let countWhereClause = whereClause.replace(/\$\d+/g, (match) => {
       // Adjust param indexes for count query
@@ -137,17 +157,27 @@ export async function searchItems(req, res) {
         SELECT 
           bi.item_id AS id,
           c.category_name,
-          NULL AS default_category
+          bi.quantity_in_stock AS quantity,
+          bi.min_stock_level,
+          COALESCE(ARRAY_AGG(DISTINCT l.location_name) FILTER (WHERE l.location_name IS NOT NULL), ARRAY[]::text[]) as locations,
+          TRUE AS is_from_catalog
         FROM business_item bi
+        LEFT JOIN product_catalog pc ON bi.catalog_id = pc.catalog_id
         LEFT JOIN category c ON bi.category_id = c.category_id
+        LEFT JOIN item_location il ON bi.item_id = il.item_id
+        LEFT JOIN location l ON il.location_id = l.location_id
         WHERE bi.business_id = $1
           AND (LOWER(bi.item_name) LIKE LOWER($2) OR LOWER(bi.sku) LIKE LOWER($3))
+        GROUP BY bi.item_id, c.category_name, bi.quantity_in_stock, bi.min_stock_level
       ),
       catalog_items AS (
         SELECT
           pc.catalog_id AS id,
           NULL AS category_name,
-          pc.default_category
+          0::int AS quantity,
+          0::int AS min_stock_level,
+          ARRAY[]::text[] AS locations,
+          FALSE AS is_from_catalog
         FROM product_catalog pc
         WHERE (LOWER(pc.name) LIKE LOWER($2) OR LOWER(pc.barcode) LIKE LOWER($3))
           AND NOT EXISTS (
@@ -163,6 +193,8 @@ export async function searchItems(req, res) {
       SELECT COUNT(*) as total_items FROM combined_results
       WHERE 1=1 ${countWhereClause}
     `;
+
+    
     const countResult = await pool.query(countQuery, countParams);
     const totalItems = parseInt(countResult.rows[0].total_items);
     const totalPages = Math.ceil(totalItems / limit);
@@ -177,8 +209,8 @@ export async function searchItems(req, res) {
       }
     });
   } catch (error) {
-    console.error('Error searching items:', error);
-    res.status(500).json({ message: 'Error searching items', error: error.message });
+    console.error('Error searching items:', error.stack || error);
+    res.status(500).json({ message: error.message });
   }
 }
 
@@ -199,10 +231,9 @@ export async function getCategories(req, res) {
 
     const result = await pool.query(query, [businessId]);
     res.json(result.rows);
-    console.log(result.rows);
   } catch (error) {
     console.error('Error fetching categories:', error);
-    res.status(500).json({ message: 'Error fetching categories', error: error.message });
+    res.status(500).json({ message: 'Error fetching categories' });
   }
 }
 
@@ -225,6 +256,6 @@ export async function getLocations(req, res) {
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching locations:', error);
-    res.status(500).json({ message: 'Error fetching locations', error: error.message });
+    res.status(500).json({ message: 'Error fetching locations' });
   }
 }

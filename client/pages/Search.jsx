@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BsSearch, BsPlus, BsInfoCircle } from 'react-icons/bs';
+import { useNavigate } from 'react-router-dom';
 
 function Search() {
+  const navigate = useNavigate();
+  
   // State for search and results
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
@@ -30,11 +33,13 @@ function Search() {
           axios.get('/data/search/locations')
         ]);
         
-        setCategories(categoriesRes.data);
-        setLocations(locationsRes.data);
+        setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
+        setLocations(Array.isArray(locationsRes.data) ? locationsRes.data : []);
       } catch (err) {
         console.error('Error fetching filter options:', err);
         setError('Failed to load filter options');
+        setCategories([]);
+        setLocations([]);
       }
     };
     
@@ -60,12 +65,13 @@ function Search() {
         }
       });
       
-      setItems(response.data.items);
+      setItems(Array.isArray(response.data.items) ? response.data.items : []);
       setLoading(false);
     } catch (err) {
       console.error('Error searching items:', err);
-      setError('Failed to search items');
+      setError(`Failed to search items: ${err.message}`);
       setLoading(false);
+      setItems([]);
     }
   };
 
@@ -84,15 +90,13 @@ function Search() {
   // Close detail view
   const closeDetails = () => {
     setShowDetails(false);
+    setSelectedItem(null);
   };
 
-  // Handle adding catalog item to inventory
-  const handleAddToCatalog = (item) => {
-    // This will link to the stocktake page with item details pre-filled
-    // For now just a placeholder
-    console.log('Add item to inventory:', item);
-    // In a real implementation, you might redirect to stocktake page with query params:
-    // navigate('/stocktake?addItem=true&catalogId=' + item.id);
+  // Handle adding an item from the catalog to business inventory
+  const handleAddToInventory = (item) => {
+    localStorage.setItem('neatstock-catalog-item', JSON.stringify(item));
+    navigate('/stocktake');
   };
 
   return (
@@ -161,7 +165,7 @@ function Search() {
               <option value="in-stock">In Stock</option>
               <option value="low-stock">Low Stock</option>
               <option value="out-of-stock">Out of Stock</option>
-              <option value="catalog-only">Catalog Only</option>
+              <option value="catalog-only">Catalog Items</option>
             </select>
           </div>
         </form>
@@ -206,22 +210,31 @@ function Search() {
                           />
                         )}
                         <span>{item.name}</span>
-                        {!item.in_inventory && (
-                          <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Catalog</span>
+                        {item.quantity === 0 && !item.is_from_catalog && (
+                          <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">Out of Stock</span>
+                        )}
+                        {!item.is_from_catalog && (
+                          <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Catalog Item</span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {item.sku || item.barcode}
+                      {item.sku || item.barcode || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {item.category_name || item.default_category}
+                      {item.category_name || 'Uncategorised'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {item.in_inventory ? item.quantity : 'N/A'}
+                      {item.is_from_catalog ? item.quantity : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button className="text-primary hover:text-blue-700">
+                      <button 
+                        className="text-primary hover:text-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleItemClick(item);
+                        }}
+                      >
                         <BsInfoCircle />
                       </button>
                     </td>
@@ -260,29 +273,45 @@ function Search() {
               <div>{selectedItem.sku || selectedItem.barcode || 'N/A'}</div>
               
               <div className="text-sm text-gray-500">Category:</div>
-              <div>{selectedItem.category_name || selectedItem.default_category || 'N/A'}</div>
+              <div>{selectedItem.category_name || 'Uncategorised'}</div>
               
-              {selectedItem.in_inventory && (
+              {selectedItem.is_from_catalog ? (
                 <>
                   <div className="text-sm text-gray-500">Quantity:</div>
                   <div>{selectedItem.quantity}</div>
                   
                   <div className="text-sm text-gray-500">Location(s):</div>
-                  <div>{selectedItem.locations?.join(', ') || 'None'}</div>
+                  <div>
+                    {selectedItem.locations && selectedItem.locations.length > 0 
+                      ? selectedItem.locations.join(', ') 
+                      : 'None'}
+                  </div>
                   
-                  <div className="text-sm text-gray-500">Cost Price:</div>
-                  <div>{selectedItem.cost_price ? `$${selectedItem.cost_price}` : 'N/A'}</div>
+                  {selectedItem.cost_price !== null && (
+                    <>
+                      <div className="text-sm text-gray-500">Cost Price:</div>
+                      <div>${selectedItem.cost_price}</div>
+                    </>
+                  )}
                   
-                  <div className="text-sm text-gray-500">Unit Price:</div>
-                  <div>{selectedItem.unit_price ? `$${selectedItem.unit_price}` : 'N/A'}</div>
+                  {selectedItem.unit_price !== null && (
+                    <>
+                      <div className="text-sm text-gray-500">Unit Price:</div>
+                      <div>${selectedItem.unit_price}</div>
+                    </>
+                  )}
                 </>
+              ) : (
+                <div className="col-span-2 text-sm text-gray-500 mt-2">
+                  This item is from the catalog and not yet in your inventory.
+                </div>
               )}
             </div>
             
             <div className="flex justify-end">
-              {!selectedItem.in_inventory ? (
+              {!selectedItem.is_from_catalog ? (
                 <button 
-                  onClick={() => handleAddToCatalog(selectedItem)}
+                  onClick={() => handleAddToInventory(selectedItem)}
                   className="bg-primary text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-1"
                 >
                   <BsPlus size={20} /> Add to Inventory

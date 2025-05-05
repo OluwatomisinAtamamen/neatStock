@@ -14,7 +14,7 @@ function Sidebar({openSidebarToggle, OpenSidebar}) {
   const { pathname } = useLocation();
   
   return (
-    <aside className={`fixed left-0 top-0 h-screen overflow-y-auto w-64 bg-card shadow-lg z-30 transition-all duration-300 ease-in-out transform ${openSidebarToggle ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:relative lg:shadow-none lg:w-60`}>
+    <aside className={`fixed left-0 top-0 h-screen overflow-y-auto w-64 bg-card shadow-lg z-30 transition-all duration-300 ease-in-out transform ${openSidebarToggle ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:shadow-none lg:w-60`}>
       <div className="flex items-center gap-2 text-primary font-bold text-xl mb-8 px-4 pt-4">
         <span>NeatStock</span>
         <button 

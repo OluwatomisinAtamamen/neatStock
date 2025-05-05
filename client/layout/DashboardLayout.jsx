@@ -23,7 +23,7 @@ function DashboardLayout() {
       
       <Sidebar openSidebarToggle={openSidebarToggle} OpenSidebar={OpenSidebar} />
       
-      <div className="w-full min-h-screen bg-background p-4 transition-all duration-300 flex-1">
+      <div className="w-full min-h-screen bg-background p-4 transition-all duration-300 flex-1 lg:ml-60">
         <main className="p-4">
           <Outlet />
         </main>

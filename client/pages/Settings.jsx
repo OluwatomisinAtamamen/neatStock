@@ -513,7 +513,7 @@ function Settings() {
                 <div className="bg-gray-50 p-4 rounded mb-4">
                   <h3 className="font-medium mb-2">Current Plan: Premium</h3>
                   <p className="text-sm text-gray-600 mb-1">Renewal Date: June 1, 2025</p>
-                  <p className="text-sm text-gray-600">Amount: $29.99/month</p>
+                  <p className="text-sm text-gray-600">Amount: £12/month</p>
                 </div>
                 
                 <div className="border-t pt-4">

@@ -32,7 +32,6 @@ CREATE TABLE product_catalog (
     name TEXT NOT NULL,
     description TEXT,
     barcode VARCHAR(100) UNIQUE NOT NULL,
-    default_category VARCHAR(100),
     pack_size INTEGER NOT NULL
 );
 
@@ -74,8 +73,7 @@ CREATE TABLE business_item (
     min_stock_level INTEGER DEFAULT 0 NOT NULL,
     image_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_sku_per_business UNIQUE(business_id, sku)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create the item_location junction table
@@ -140,25 +138,24 @@ FOR EACH ROW EXECUTE FUNCTION sync_item_total_quantity();
 
 
 
--- Insert sample data into product_catalog
-INSERT INTO product_catalog (name, description, barcode, default_category, pack_size) VALUES
-('Indomie Instant Noodles', 'Chicken flavour, 75g pack', '5018821000016', 'Dry Goods', 5),
-('Golden Penny Semolina', '1kg pack', '0701470530214', 'Grains & Staples', 10),
-('Gino Spaghetti', '500g pack', '6192234000152', 'Pasta & Noodles', 8),
-('Chakalaka Spice Mix', 'South African vegetable relish spice', '6009612410011', 'Spices & Seasonings', 12),
-('Peak Milk Powder', 'Full cream, 400g tin', '0760056830127', 'Dairy Alternatives', 6),
-('Unguard Cooking Oil', 'Vegetable oil, 2L bottle', '6009800001001', 'Oils & Fats', 4),
-('Mama’s Choice Rice', 'Parboiled long grain, 5kg sack', '5000187171536', 'Grains & Staples', 2),
-('National Sugar', 'White granulated sugar, 2kg pack', '6898240012345', 'Baking & Sweeteners', 6),
-('Tropicana Waves Juice', 'Mango flavour, 1L carton', '6178493001105', 'Beverages', 8),
-('Sardine King Tinned Sardines', 'In tomato sauce, 125g tin', '6004311630012', 'Canned Goods', 12),
-('Brookside Dark Chocolate', 'Mixed berries, 90g bar', '7164012010018', 'Snacks & Sweets', 10),
-('Tusker Lager', '330ml bottle', '6009600002007', 'Alcoholic Beverages', 24),
-('Eko Nigerian Yams', 'Pre-peeled yam chunks, 1kg pack', '0701470520207', 'Fresh Produce', 5),
-('Big B Banana Chips', 'Salted, 150g bag', '6291101800156', 'Snacks & Sweets', 12),
-('Zainab’s Groundnuts', 'Roasted peanuts, 200g pack', '8106580200016', 'Snacks & Nuts', 10),
-('Blue Band Margarine', '500g tub', '8711617060015', 'Spreads & Butters', 8),
-('Garden Tomato Paste', '200g tube', '6004830030015', 'Condiments', 12),
-('Egusi Melon Seeds', '500g pack', '0701470530313', 'Grains & Staples', 6),
-('Lipton Yellow Label Tea', '100 tea bags', '8901030870012', 'Beverages', 4),
-('Dano Full Cream Milk', '500g tin', '8906001510010', 'Dairy Alternatives', 8);
+INSERT INTO product_catalog (name, description, barcode, pack_size) VALUES
+('Standard Can of Beans', '400g tin of baked beans', '0123456789012', 1),
+('Family Pack Rice', '5 kg bag of long grain rice', '0123456789013', 1),
+('Small Spice Packet', '50 g mixed spice blend', '0123456789014', 1),
+('Mineral Water Bottle', '1.5 L bottle of still water', '0123456789015', 1),
+('Soda Can', '330 ml can of cola', '0123456789016', 1),
+('Loaf of Bread', '800 g sliced wholemeal loaf', '0123456789017', 1),
+('Egg Carton', '6 free-range eggs', '0123456789018', 1),
+('Milk Carton', '2 L semi-skimmed milk', '0123456789019', 1),
+('Chocolate Bar', '100 g milk chocolate', '0123456789020', 1),
+('Pack of Noodles', '5 × 70 g instant noodles', '0123456789021', 5),
+('Frozen Peas', '1 kg bag of frozen garden peas', '0123456789022', 1),
+('Cooking Oil Bottle', '1 L sunflower oil', '0123456789023', 1),
+('Toilet Roll Pack', '4 rolls of toilet paper', '0123456789024', 4),
+('Laundry Detergent', '2 L liquid detergent', '0123456789025', 1),
+('Dishwashing Tablets', '30-pack dishwasher tablets', '0123456789026', 30),
+('Cereal Box', '750 g cornflakes cereal', '0123456789027', 1),
+('Tea Bags', '80 tea bags, English Breakfast', '0123456789028', 80),
+('Paper Towels', '2 rolls of kitchen paper towels', '0123456789029', 2),
+('Butter Block', '250 g unsalted butter', '0123456789030', 1),
+('Tomato Ketchup', '500 g bottle of ketchup', '0123456789031', 1);
