@@ -142,7 +142,7 @@ FOR EACH ROW EXECUTE FUNCTION sync_item_total_quantity();
 
 -- Insert sample data into product_catalog
 INSERT INTO product_catalog (name, description, barcode, default_category, pack_size) VALUES
-('Indomie Instant Noodles', 'Chicken flavor, 75g pack', '5018821000016', 'Dry Goods', 5),
+('Indomie Instant Noodles', 'Chicken flavour, 75g pack', '5018821000016', 'Dry Goods', 5),
 ('Golden Penny Semolina', '1kg pack', '0701470530214', 'Grains & Staples', 10),
 ('Gino Spaghetti', '500g pack', '6192234000152', 'Pasta & Noodles', 8),
 ('Chakalaka Spice Mix', 'South African vegetable relish spice', '6009612410011', 'Spices & Seasonings', 12),
@@ -150,7 +150,7 @@ INSERT INTO product_catalog (name, description, barcode, default_category, pack_
 ('Unguard Cooking Oil', 'Vegetable oil, 2L bottle', '6009800001001', 'Oils & Fats', 4),
 ('Mama’s Choice Rice', 'Parboiled long grain, 5kg sack', '5000187171536', 'Grains & Staples', 2),
 ('National Sugar', 'White granulated sugar, 2kg pack', '6898240012345', 'Baking & Sweeteners', 6),
-('Tropicana Waves Juice', 'Mango flavor, 1L carton', '6178493001105', 'Beverages', 8),
+('Tropicana Waves Juice', 'Mango flavour, 1L carton', '6178493001105', 'Beverages', 8),
 ('Sardine King Tinned Sardines', 'In tomato sauce, 125g tin', '6004311630012', 'Canned Goods', 12),
 ('Brookside Dark Chocolate', 'Mixed berries, 90g bar', '7164012010018', 'Snacks & Sweets', 10),
 ('Tusker Lager', '330ml bottle', '6009600002007', 'Alcoholic Beverages', 24),

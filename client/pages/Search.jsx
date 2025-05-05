@@ -1,107 +1,305 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { BsSearch, BsPlus, BsInfoCircle } from 'react-icons/bs';
 
 function Search() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [hasSearched, setHasSearched] = useState(false);
+  // State for search and results
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('');
+  const [location, setLocation] = useState('');
+  const [stockStatus, setStockStatus] = useState('all');
+  
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // State for filter options
+  const [categories, setCategories] = useState([]);
+  const [locations, setLocations] = useState([]);
+  
+  // State for selected item and detail view
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
 
+  // Fetch filter options on component mount
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const [categoriesRes, locationsRes] = await Promise.all([
+          axios.get('/data/search/categories'),
+          axios.get('/data/search/locations')
+        ]);
+        
+        setCategories(categoriesRes.data);
+        setLocations(locationsRes.data);
+      } catch (err) {
+        console.error('Error fetching filter options:', err);
+        setError('Failed to load filter options');
+      }
+    };
+    
+    fetchFilterOptions();
+  }, []);
+
+  // Search function
+  const searchItems = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.get('/data/search/items', {
+        params: {
+          query,
+          category,
+          location,
+          stockStatus,
+          sortBy: 'name',
+          sortDir: 'asc',
+          page: 1,
+          limit: 50
+        }
+      });
+      
+      setItems(response.data.items);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error searching items:', err);
+      setError('Failed to search items');
+      setLoading(false);
+    }
+  };
+
+  // Handle search submission
   const handleSearch = (e) => {
     e.preventDefault();
-    // This is where you would typically call an API to search your inventory
-    // For now, we'll use mock data
-    
-    if (searchQuery.trim() === '') {
-      setSearchResults([]);
-      return;
-    }
-    
-    setHasSearched(true);
-    
-    // Mock search results
-    const mockResults = [
-      { id: 1, name: "Product Alpha", quantity: 15, location: "Warehouse A, Shelf 3" },
-      { id: 2, name: "Alpha Max", quantity: 8, location: "Warehouse B, Shelf 1" },
-    ].filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    setSearchResults(mockResults);
+    searchItems();
+  };
+
+  // Handle item click to show details
+  const handleItemClick = (item) => {
+    setSelectedItem(item);
+    setShowDetails(true);
+  };
+
+  // Close detail view
+  const closeDetails = () => {
+    setShowDetails(false);
+  };
+
+  // Handle adding catalog item to inventory
+  const handleAddToCatalog = (item) => {
+    // This will link to the stocktake page with item details pre-filled
+    // For now just a placeholder
+    console.log('Add item to inventory:', item);
+    // In a real implementation, you might redirect to stocktake page with query params:
+    // navigate('/stocktake?addItem=true&catalogId=' + item.id);
   };
 
   return (
-    <section className="p-6">
-      <h1 className="text-3xl font-bold mb-6 text-text">Search Inventory</h1>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold text-text mb-6">Search Inventory</h1>
       
-      <div className="bg-card rounded-lg shadow p-6 mb-8">
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="relative flex-grow">
-            <input 
-              type="text" 
-              placeholder="Search by name, category, or SKU..." 
-              className="w-full p-3 pl-10 border border-gray-300 rounded"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
+      {/* Search Bar */}
+      <div className="bg-card rounded-lg shadow p-4 mb-6">
+        <form onSubmit={handleSearch} className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-grow">
+              <input 
+                type="text" 
+                placeholder="Search by name or SKU/barcode..." 
+                className="w-full p-3 pl-10 border border-gray-300 rounded-md"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <BsSearch className="text-gray-400" />
+              </div>
             </div>
-          </div>
-          <button 
-            type="submit" 
-            className="bg-primary text-white px-6 py-3 rounded hover:bg-blue-700"
-          >
-            Search
-          </button>
-        </form>
-        
-        <div className="flex flex-wrap gap-2 mt-4">
-          <span className="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-600">Filter: In Stock</span>
-          <span className="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-600">Category: All</span>
-          <span className="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-600">Location: All</span>
-        </div>
-      </div>
-      
-      {hasSearched && (
-        <div className="bg-card rounded-lg shadow">
-          <div className="p-4 border-b">
-            <h2 className="text-xl font-medium">Search Results</h2>
-            <p className="text-gray-500">Found {searchResults.length} items for &quot;{searchQuery}&quot;</p>
+            
+            <button 
+              type="submit" 
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Search
+            </button>
           </div>
           
-          {searchResults.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          {/* Filter Options */}
+          <div className="flex flex-wrap gap-4">
+            <select 
+              className="p-2 border border-gray-300 rounded"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat.category_id} value={cat.category_name}>
+                  {cat.category_name}
+                </option>
+              ))}
+            </select>
+            
+            <select 
+              className="p-2 border border-gray-300 rounded"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              <option value="">All Locations</option>
+              {locations.map(loc => (
+                <option key={loc.location_id} value={loc.location_name}>
+                  {loc.location_name}
+                </option>
+              ))}
+            </select>
+            
+            <select 
+              className="p-2 border border-gray-300 rounded"
+              value={stockStatus}
+              onChange={(e) => setStockStatus(e.target.value)}
+            >
+              <option value="all">All Items</option>
+              <option value="in-stock">In Stock</option>
+              <option value="low-stock">Low Stock</option>
+              <option value="out-of-stock">Out of Stock</option>
+              <option value="catalog-only">Catalog Only</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      
+      {/* Results */}
+      <div className="bg-card rounded-lg shadow">
+        {loading ? (
+          <div className="p-6 text-center">Loading...</div>
+        ) : error ? (
+          <div className="p-6 text-center text-red-500">{error}</div>
+        ) : items.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            {query ? 'No items found. Try a different search term.' : 'Search for items to get started.'}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU/Barcode</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {items.map(item => (
+                  <tr 
+                    key={item.id} 
+                    onClick={() => handleItemClick(item)}
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {item.image_url && (
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name}
+                            className="h-10 w-10 mr-3 rounded object-cover" 
+                          />
+                        )}
+                        <span>{item.name}</span>
+                        {!item.in_inventory && (
+                          <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Catalog</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {item.sku || item.barcode}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {item.category_name || item.default_category}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {item.in_inventory ? item.quantity : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button className="text-primary hover:text-blue-700">
+                        <BsInfoCircle />
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {searchResults.map(item => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.location}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button className="text-blue-600 hover:text-blue-900 mr-2">View</button>
-                        <button className="text-gray-600 hover:text-gray-900">Update</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      
+      {/* Item Detail Modal */}
+      {showDetails && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-25 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-bold">{selectedItem.name}</h2>
+              <button 
+                onClick={closeDetails}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
             </div>
-          ) : (
-            <div className="p-6 text-center text-gray-500">
-              No results found. Try a different search term.
+            
+            {selectedItem.image_url && (
+              <img 
+                src={selectedItem.image_url} 
+                alt={selectedItem.name}
+                className="w-full h-48 object-contain mb-4 bg-gray-50 rounded" 
+              />
+            )}
+            
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="text-sm text-gray-500">SKU/Barcode:</div>
+              <div>{selectedItem.sku || selectedItem.barcode || 'N/A'}</div>
+              
+              <div className="text-sm text-gray-500">Category:</div>
+              <div>{selectedItem.category_name || selectedItem.default_category || 'N/A'}</div>
+              
+              {selectedItem.in_inventory && (
+                <>
+                  <div className="text-sm text-gray-500">Quantity:</div>
+                  <div>{selectedItem.quantity}</div>
+                  
+                  <div className="text-sm text-gray-500">Location(s):</div>
+                  <div>{selectedItem.locations?.join(', ') || 'None'}</div>
+                  
+                  <div className="text-sm text-gray-500">Cost Price:</div>
+                  <div>{selectedItem.cost_price ? `$${selectedItem.cost_price}` : 'N/A'}</div>
+                  
+                  <div className="text-sm text-gray-500">Unit Price:</div>
+                  <div>{selectedItem.unit_price ? `$${selectedItem.unit_price}` : 'N/A'}</div>
+                </>
+              )}
             </div>
-          )}
+            
+            <div className="flex justify-end">
+              {!selectedItem.in_inventory ? (
+                <button 
+                  onClick={() => handleAddToCatalog(selectedItem)}
+                  className="bg-primary text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-1"
+                >
+                  <BsPlus size={20} /> Add to Inventory
+                </button>
+              ) : (
+                <button 
+                  className="bg-gray-100 text-gray-800 px-4 py-2 rounded hover:bg-gray-200"
+                  onClick={closeDetails}
+                >
+                  Close
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }
 

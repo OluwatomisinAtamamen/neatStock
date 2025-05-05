@@ -10,6 +10,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import locationRoutes from './routes/locations.js';
+import searchRoutes from './routes/search.js';
 
 // Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -59,8 +60,8 @@ app.use(session({
   }
 }));
 
-// Mount the auth routes under /data/users
 app.use('/data/users', authRoutes);
 app.use('/data/locations', locationRoutes);
+app.use('/data/search', searchRoutes);
 
 app.listen(8080);
