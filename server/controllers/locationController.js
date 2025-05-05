@@ -212,7 +212,7 @@ export async function uploadLocationImage(req, res) {
     }
 
     // Generate URL for the uploaded file
-    const imageUrl = `/uploads/${req.file.filename}`;
+    const imageUrl = `/data/uploads/${req.file.filename}`;
 
     res.json({ 
       message: 'File uploaded successfully', 

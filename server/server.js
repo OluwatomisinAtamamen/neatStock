@@ -38,7 +38,7 @@ app.post(
 app.use(express.json());
 app.use(cookieParser());
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/data/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const PostgreSqlStore = pgSession(session);
 const sessionStore = new PostgreSqlStore({

@@ -26,6 +26,19 @@ function Locations() {
     image_url: ''
   });
 
+  // State for toast notifications
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // Show toast notification
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
+
   // Fetch locations when component mounts
   useEffect(() => {
     fetchLocations();
@@ -48,10 +61,10 @@ function Locations() {
       filtered.sort((a, b) => {
         if (sortBy === 'name') {
           return a.location_name.localeCompare(b.location_name);
-        } else if (sortBy === 'utilization') {
-          const utilizationA = a.current_rsu_usage / a.capacity_rsu;
-          const utilizationB = b.current_rsu_usage / b.capacity_rsu;
-          return utilizationB - utilizationA;
+        } else if (sortBy === 'utilisation') {
+          const utilisationA = a.current_rsu_usage / a.capacity_rsu;
+          const utilisationB = b.current_rsu_usage / b.capacity_rsu;
+          return utilisationB - utilisationA;
         }
         return 0;
       });
@@ -110,10 +123,15 @@ function Locations() {
   // Handler for image upload
   const handleImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      
+      // Store file for preview
+      setLocationImage(selectedFile);
+      
       try {
         // Create FormData for file upload
         const formData = new FormData();
-        formData.append('image', e.target.files[0]);
+        formData.append('image', selectedFile);
         
         // Upload the file
         const response = await axios.post('/data/locations/upload-image', formData, {
@@ -125,12 +143,9 @@ function Locations() {
           ...prev,
           image_url: response.data.imageUrl
         }));
-        
-        // Store file for preview
-        setLocationImage(e.target.files[0]);
       } catch (error) {
         console.error('Error uploading image:', error);
-        alert('Failed to upload image. Please try again.');
+        showToast('Failed to upload image. Please try again.', 'error');
       }
     }
   };
@@ -140,7 +155,7 @@ function Locations() {
     try {
       // Validate required fields
       if (!currentLocation.location_name || !currentLocation.location_code || !currentLocation.capacity_rsu) {
-        alert('Please fill out all required fields');
+        showToast('Please fill out all required fields', 'error');
         return;
       }
 
@@ -157,19 +172,20 @@ function Locations() {
           )
         );
         
-        alert('Location updated successfully!');
+        showToast('Location updated successfully!');
       } else {
         // Create new location
         const response = await axios.post('/data/locations', currentLocation);
         setLocations(prev => [...prev, response.data]);
-        alert('Location created successfully!');
+        showToast('Location created successfully!');
       }
       
-      // Close the panel
+      // Close the panel and reset image
+      setLocationImage(null);
       setShowPanel(false);
     } catch (err) {
       console.error('Failed to save location:', err);
-      alert(err.response?.data?.message || 'Error saving location');
+      showToast(err.response?.data?.message || 'Error saving location', 'error');
     }
   };
 
@@ -184,24 +200,24 @@ function Locations() {
       
       // Close the panel
       setShowPanel(false);
-      if (response.status === 204) {
-        alert('Location removed successfully');
+      if ( response.status === 200 ) {
+        showToast('Location removed successfully');
       }
     } catch (err) {
       console.error('Failed to delete location:', err);
-      alert(err.response?.data?.message || 'Error deleting location');
+      showToast(err.response?.data?.message || 'Error deleting location', 'error');
     }
   };
 
-  // Calculate utilization percentage
-  const calculateUtilization = (current, capacity) => {
+  // Calculate utilisation percentage
+  const calculateUtilisation = (current, capacity) => {
     return (current / capacity) * 100;
   };
 
-  // Get color class based on utilization
-  const getUtilizationColorClass = (utilization) => {
-    if (utilization >= 90) return 'bg-red-500';
-    if (utilization >= 75) return 'bg-yellow-500';
+  // Get colour class based on utilisation
+  const getUtilisationColourClass = (utilisation) => {
+    if (utilisation >= 90) return 'bg-red-500';
+    if (utilisation >= 75) return 'bg-yellow-500';
     return 'bg-green-500';
   };
 
@@ -231,7 +247,7 @@ function Locations() {
             onChange={(e) => setSortBy(e.target.value)}
           >
             <option value="name">Sort by Name</option>
-            <option value="utilization">Sort by Utilization</option>
+            <option value="utilisation">Sort by Utilisation</option>
           </select>
           
           <button 
@@ -285,6 +301,9 @@ function Locations() {
                     src={location.image_url} 
                     alt={location.location_name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://placehold.co/400x300?text=Image+Not+Available';
+                    }}
                   />
                 </div>
               )}
@@ -292,14 +311,14 @@ function Locations() {
               <p className="text-sm text-gray-600 mb-3 line-clamp-2">{location.description}</p>
               
               <div className="mb-1 flex justify-between">
-                <span className="text-sm font-medium">Space Utilization</span>
+                <span className="text-sm font-medium">Space Utilisation</span>
                 <span className="text-sm">{location.current_rsu_usage}/{location.capacity_rsu} RSU</span>
               </div>
               
               <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
                 <div 
-                  className={`h-2.5 rounded-full ${getUtilizationColorClass(calculateUtilization(location.current_rsu_usage, location.capacity_rsu))}`}
-                  style={{ width: `${calculateUtilization(location.current_rsu_usage, location.capacity_rsu)}%` }}
+                  className={`h-2.5 rounded-full ${getUtilisationColourClass(calculateUtilisation(location.current_rsu_usage, location.capacity_rsu))}`}
+                  style={{ width: `${calculateUtilisation(location.current_rsu_usage, location.capacity_rsu)}%` }}
                 ></div>
               </div>
               
@@ -324,7 +343,10 @@ function Locations() {
               {isEditing ? `Edit Location: ${currentLocation.location_name}` : 'Add New Location'}
             </h2>
             <button 
-              onClick={() => setShowPanel(false)}
+              onClick={() => {
+                setShowPanel(false);
+                setLocationImage(null);
+              }}
               className="text-gray-500 hover:text-gray-700"
             >
               <BsXLg />
@@ -411,12 +433,17 @@ function Locations() {
                   {locationImage ? locationImage.name : 'No file chosen'}
                 </span>
               </div>
-              {(currentLocation.image_url) && (
+              {(locationImage || currentLocation.image_url) && (
                 <div className="mt-2">
                   <img
-                    src={currentLocation.image_url}
+                    src={locationImage 
+                      ? URL.createObjectURL(locationImage) 
+                      : currentLocation.image_url}
                     alt="Location preview"
                     className="h-32 object-cover rounded-md"
+                    onError={(e) => {
+                      e.target.src = 'https://placehold.co/400x300?text=Image+Not+Available';
+                    }}
                   />
                 </div>
               )}
@@ -424,7 +451,10 @@ function Locations() {
             
             <div className="pt-6 border-t flex justify-between">
               <button
-                onClick={() => setShowPanel(false)}
+                onClick={() => {
+                  setShowPanel(false);
+                  setLocationImage(null);
+                }}
                 className="bg-gray-100 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-200"
               >
                 Cancel
@@ -481,6 +511,30 @@ function Locations() {
           className="fixed inset-0 bg-black bg-opacity-30 z-20"
           onClick={() => setShowPanel(false)}
         ></div>
+      )}
+      
+      {/* Toast notification */}
+      {toast.show && (
+        <div 
+          className={`fixed bottom-4 right-4 px-6 py-3 rounded-md shadow-lg z-50 max-w-md animate-fade-in ${
+            toast.type === 'success' 
+              ? 'bg-green-50 text-green-800 border-l-4 border-green-500' 
+              : 'bg-red-50 text-red-800 border-l-4 border-red-500'
+          }`}
+        >
+          <div className="flex items-center">
+            {toast.type === 'success' ? (
+              <svg className="w-5 h-5 mr-3" fill="currentColour" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 mr-3" fill="currentColour" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"></path>
+              </svg>
+            )}
+            {toast.message}
+          </div>
+        </div>
       )}
     </section>
   );
