@@ -13,6 +13,7 @@ import locationRoutes from './routes/locations.js';
 import searchRoutes from './routes/search.js';
 import inventoryRoutes from './routes/inventory.js';
 import * as settingsController from './controllers/settingsController.js';
+import reportsRoutes from './routes/reports.js';
 
 // Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -66,6 +67,7 @@ app.use('/data/users', authRoutes);
 app.use('/data/locations', locationRoutes);
 app.use('/data/search', searchRoutes);
 app.use('/data/inventory', inventoryRoutes);
+app.use('/data/reports', reportsRoutes);
 
 // Business profile routes
 app.get('/data/settings/business', settingsController.getBusinessProfile);
