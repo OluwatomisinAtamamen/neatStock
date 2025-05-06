@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/auth';
-// import axios from 'axios';
-import { BsChevronDown, BsChevronUp, BsPersonPlus, BsTrash } from 'react-icons/bs';
+import axios from 'axios';
+import { BsChevronDown, BsChevronUp, BsPersonPlus, BsTrash, BsPlusLg } from 'react-icons/bs';
 
 function Settings() {
   const { user } = useContext(AuthContext);
@@ -9,8 +9,6 @@ function Settings() {
   const [expandedSection, setExpandedSection] = useState('business');
   const [addingStaff, setAddingStaff] = useState(false);
   const [staff, setStaff] = useState([]);
-  const [theme, setTheme] = useState('light');
-  const [units, setUnits] = useState('metric');
   const [businessProfile, setBusinessProfile] = useState({
     businessName: '',
     businessEmail: '',
@@ -18,17 +16,27 @@ function Settings() {
     phone: '',
     contactPerson: ''
   });
+  
+  // New staff with simpler permissions model (just admin)
   const [newStaff, setNewStaff] = useState({
     firstName: '',
     lastName: '',
     email: '',
     username: '',
     password: '',
-    logsPermission: false,
-    reportsPermission: false
+    is_admin: false
+  });
+  
+  // Categories state
+  const [categories, setCategories] = useState([]);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState({ 
+    category_name: '', 
+    description: '' 
   });
 
-  // Check if user is admin
+  // Check if user is admin and load data
   useEffect(() => {
     if (user) {
       // This would normally fetch from the backend
@@ -45,12 +53,16 @@ function Settings() {
       
       // Fetch staff (mock)
       setStaff([
-        { id: 1, name: 'Jane Smith', username: 'jsmith', email: 'jane@example.com', logsPermission: true, reportsPermission: true },
-        { id: 2, name: 'Mike Johnson', username: 'mjohnson', email: 'mike@example.com', logsPermission: false, reportsPermission: true }
+        { id: 1, name: 'Jane Smith', username: 'jsmith', email: 'jane@example.com', is_admin: true },
+        { id: 2, name: 'Mike Johnson', username: 'mjohnson', email: 'mike@example.com', is_admin: false }
       ]);
+      
+      // Fetch categories
+      fetchCategories();
     }
   }, [user]);
 
+  // Toggle section visibility
   const toggleSection = (section) => {
     if (expandedSection === section) {
       setExpandedSection(null);
@@ -59,6 +71,7 @@ function Settings() {
     }
   };
 
+  // Business profile update
   const handleBusinessProfileUpdate = (e) => {
     e.preventDefault();
     // API call to update business profile
@@ -66,6 +79,7 @@ function Settings() {
     alert('Business profile updated successfully!');
   };
 
+  // Staff management functions
   const handleAddStaff = (e) => {
     e.preventDefault();
     // API call to add staff
@@ -75,8 +89,7 @@ function Settings() {
       name: `${newStaff.firstName} ${newStaff.lastName}`,
       username: newStaff.username,
       email: newStaff.email,
-      logsPermission: newStaff.logsPermission,
-      reportsPermission: newStaff.reportsPermission
+      is_admin: newStaff.is_admin
     }]);
     setNewStaff({
       firstName: '',
@@ -84,8 +97,7 @@ function Settings() {
       email: '',
       username: '',
       password: '',
-      logsPermission: false,
-      reportsPermission: false
+      is_admin: false
     });
     setAddingStaff(false);
     alert('Staff added successfully!');
@@ -98,28 +110,107 @@ function Settings() {
     alert('Staff removed successfully!');
   };
 
-  const togglePermission = (id, permission) => {
+  const toggleAdminStatus = (id) => {
     setStaff(staff.map(member => {
       if (member.id === id) {
         return {
           ...member,
-          [permission]: !member[permission]
+          is_admin: !member.is_admin
         };
       }
       return member;
     }));
   };
 
-  const updateTheme = (e) => {
-    setTheme(e.target.value);
-    // Apply theme change logic here
+  // Category management functions
+  const fetchCategories = async () => {
+    try {
+      // For now, use mock data
+      const mockCategories = [
+        { category_id: 1, category_name: 'Food', description: 'Edible items' },
+        { category_id: 2, category_name: 'Electronics', description: 'Devices and gadgets' },
+        { category_id: 3, category_name: 'Clothing', description: 'Wearable items' }
+      ];
+      setCategories(mockCategories);
+      
+      // In production, uncomment this to fetch from API:
+      // const response = await axios.get('/data/settings/categories');
+      // setCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      alert('Failed to load categories');
+    }
   };
 
-  const updateUnits = (e) => {
-    setUnits(e.target.value);
-    // Save units preference
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      if (editingCategory) {
+        // Update existing category (mock)
+        console.log('Updating category:', newCategory);
+        setCategories(categories.map(cat => 
+          cat.category_id === newCategory.category_id ? newCategory : cat
+        ));
+        
+        // In production:
+        // await axios.put(`/data/settings/categories/${newCategory.category_id}`, {
+        //   category_name: newCategory.category_name,
+        //   description: newCategory.description
+        // });
+      } else {
+        // Add new category (mock)
+        const mockNewCategory = {
+          ...newCategory,
+          category_id: Date.now()
+        };
+        console.log('Adding category:', mockNewCategory);
+        setCategories([...categories, mockNewCategory]);
+        
+        // In production:
+        // await axios.post('/data/settings/categories', {
+        //   category_name: newCategory.category_name,
+        //   description: newCategory.description
+        // });
+      }
+      
+      // Reset form
+      setNewCategory({ category_name: '', description: '' });
+      setAddingCategory(false);
+      setEditingCategory(false);
+      alert(`Category ${editingCategory ? 'updated' : 'added'} successfully!`);
+    } catch (error) {
+      console.error('Error saving category:', error);
+      alert(`Failed to save category: ${error.response?.data?.message || error.message}`);
+    }
   };
 
+  const editCategory = (category) => {
+    setNewCategory({ ...category });
+    setEditingCategory(true);
+    setAddingCategory(true);
+  };
+
+  const deleteCategory = async (categoryId) => {
+    if (!window.confirm('Are you sure you want to delete this category? This may affect items using it.')) {
+      return;
+    }
+    
+    try {
+      // Remove from local state (mock)
+      setCategories(categories.filter(cat => cat.category_id !== categoryId));
+      
+      // In production:
+      // await axios.delete(`/data/settings/categories/${categoryId}`);
+      
+      alert('Category deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      alert(`Failed to delete category: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  // Subscription management
   const handleCancelSubscription = () => {
     if (window.confirm('Are you sure you want to cancel your subscription? This action cannot be undone and you will lose access to your account.')) {
       // API call to cancel subscription
@@ -314,30 +405,22 @@ function Settings() {
                             required
                           />
                         </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <h4 className="font-medium mb-2">Permissions:</h4>
-                        <div className="flex flex-col space-y-2">
-                          <label className="inline-flex items-center">
-                            <input
-                              type="checkbox"
-                              className="form-checkbox h-5 w-5 text-primary"
-                              checked={newStaff.logsPermission}
-                              onChange={() => setNewStaff({...newStaff, logsPermission: !newStaff.logsPermission})}
-                            />
-                            <span className="ml-2">Logs Access</span>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Admin Access
                           </label>
-                          
-                          <label className="inline-flex items-center">
-                            <input
-                              type="checkbox"
-                              className="form-checkbox h-5 w-5 text-primary"
-                              checked={newStaff.reportsPermission}
-                              onChange={() => setNewStaff({...newStaff, reportsPermission: !newStaff.reportsPermission})}
-                            />
-                            <span className="ml-2">Reports Access</span>
-                          </label>
+                          <div className="mt-2">
+                            <label className="inline-flex items-center">
+                              <input
+                                type="checkbox"
+                                className="form-checkbox h-5 w-5 text-primary"
+                                checked={newStaff.is_admin}
+                                onChange={() => setNewStaff({...newStaff, is_admin: !newStaff.is_admin})}
+                              />
+                              <span className="ml-2">Grant admin privileges</span>
+                            </label>
+                          </div>
                         </div>
                       </div>
                       
@@ -384,7 +467,7 @@ function Settings() {
                                 Email
                               </th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Permissions
+                                Role
                               </th>
                               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
@@ -404,26 +487,15 @@ function Settings() {
                                   {member.email}
                                 </td>
                                 <td className="px-6 py-4">
-                                  <div className="flex flex-col space-y-2">
-                                    <label className="inline-flex items-center">
-                                      <input
-                                        type="checkbox"
-                                        className="form-checkbox h-4 w-4 text-primary"
-                                        checked={member.logsPermission}
-                                        onChange={() => togglePermission(member.id, 'logsPermission')}
-                                      />
-                                      <span className="ml-2 text-sm">Logs</span>
-                                    </label>
-                                    <label className="inline-flex items-center">
-                                      <input
-                                        type="checkbox"
-                                        className="form-checkbox h-4 w-4 text-primary"
-                                        checked={member.reportsPermission}
-                                        onChange={() => togglePermission(member.id, 'reportsPermission')}
-                                      />
-                                      <span className="ml-2 text-sm">Reports</span>
-                                    </label>
-                                  </div>
+                                  <label className="inline-flex items-center">
+                                    <input
+                                      type="checkbox"
+                                      className="form-checkbox h-4 w-4 text-primary"
+                                      checked={member.is_admin}
+                                      onChange={() => toggleAdminStatus(member.id)}
+                                    />
+                                    <span className="ml-2 text-sm">Admin</span>
+                                  </label>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                   <button
@@ -451,47 +523,133 @@ function Settings() {
         )}
       </div>
       
-      {/* Preferences Section */}
+      {/* Categories Section */}
       <div className="bg-card rounded-lg shadow-md mb-6">
         <div 
           className="flex justify-between items-center p-4 cursor-pointer"
-          onClick={() => toggleSection('preferences')}
+          onClick={() => toggleSection('categories')}
         >
-          <h2 className="text-xl font-semibold">Preferences</h2>
-          {expandedSection === 'preferences' ? <BsChevronUp /> : <BsChevronDown />}
+          <h2 className="text-xl font-semibold">Categories</h2>
+          {expandedSection === 'categories' ? <BsChevronUp /> : <BsChevronDown />}
         </div>
         
-        {expandedSection === 'preferences' && (
+        {expandedSection === 'categories' && (
           <div className="p-4 border-t">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Theme
-                </label>
-                <select
-                  className="w-full p-2 border border-gray-300 rounded"
-                  value={theme}
-                  onChange={updateTheme}
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Units
-                </label>
-                <select
-                  className="w-full p-2 border border-gray-300 rounded"
-                  value={units}
-                  onChange={updateUnits}
-                >
-                  <option value="metric">Metric (kg, cm)</option>
-                  <option value="imperial">Imperial (lb, in)</option>
-                </select>
-              </div>
-            </div>
+            {isAdmin ? (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Manage Categories</h3>
+                  <button
+                    onClick={() => {
+                      setAddingCategory(true);
+                      setEditingCategory(false);
+                      setNewCategory({ category_name: '', description: '' });
+                    }}
+                    className="flex items-center bg-primary text-white py-2 px-4 rounded hover:bg-blue-700"
+                  >
+                    <BsPlusLg className="mr-1" /> Add Category
+                  </button>
+                </div>
+                
+                {/* Categories list */}
+                {categories.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                          <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {categories.map((category) => (
+                          <tr key={category.category_id}>
+                            <td className="px-6 py-4 whitespace-nowrap">{category.category_name}</td>
+                            <td className="px-6 py-4">{category.description || '-'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <button
+                                className="text-blue-600 hover:text-blue-900 mr-3"
+                                onClick={() => editCategory(category)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="text-red-600 hover:text-red-900"
+                                onClick={() => deleteCategory(category.category_id)}
+                              >
+                                <BsTrash />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">You have not created any categories yet.</p>
+                )}
+                
+                {/* Add/Edit Category form */}
+                {addingCategory && (
+                  <div className="mt-6 bg-gray-50 p-4 rounded-md">
+                    <h4 className="font-medium mb-3">
+                      {editingCategory ? 'Edit Category' : 'Add New Category'}
+                    </h4>
+                    <form onSubmit={handleCategorySubmit}>
+                      <div className="grid grid-cols-1 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Category Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full p-2 border border-gray-300 rounded"
+                            value={newCategory.category_name}
+                            onChange={(e) => setNewCategory({...newCategory, category_name: e.target.value})}
+                            required
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Description
+                          </label>
+                          <textarea
+                            className="w-full p-2 border border-gray-300 rounded"
+                            rows="3"
+                            value={newCategory.description || ''}
+                            onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
+                          ></textarea>
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <button
+                          type="submit"
+                          className="bg-primary text-white py-2 px-4 rounded hover:bg-blue-700"
+                        >
+                          {editingCategory ? 'Update' : 'Add'} Category
+                        </button>
+                        <button
+                          type="button"
+                          className="bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300"
+                          onClick={() => {
+                            setAddingCategory(false);
+                            setEditingCategory(false);
+                            setNewCategory({ category_name: '', description: '' });
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-gray-500">You need administrator rights to manage categories.</p>
+            )}
           </div>
         )}
       </div>

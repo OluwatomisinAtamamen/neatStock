@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import locationRoutes from './routes/locations.js';
 import searchRoutes from './routes/search.js';
 import inventoryRoutes from './routes/inventory.js';
+import * as settingsController from './controllers/settingsController.js';
 
 // Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -65,5 +66,9 @@ app.use('/data/users', authRoutes);
 app.use('/data/locations', locationRoutes);
 app.use('/data/search', searchRoutes);
 app.use('/data/inventory', inventoryRoutes);
+app.get('/data/settings/categories', settingsController.getCategories);
+app.post('/data/settings/categories', settingsController.createCategory);
+app.put('/data/settings/categories/:categoryId', settingsController.updateCategory);
+app.delete('/data/settings/categories/:categoryId', settingsController.deleteCategory);
 
 app.listen(8080);
