@@ -22,6 +22,7 @@ CREATE TABLE app_user (
     first_name VARCHAR(35) NOT NULL,
     last_name VARCHAR(35) NOT NULL,
     is_admin BOOLEAN DEFAULT TRUE,
+    is_owner BOOLEAN DEFAULT FALSE,
     last_login_at TIMESTAMP,
     CONSTRAINT unique_email_per_business UNIQUE(business_id, username)
 );
@@ -165,6 +166,7 @@ INSERT INTO app_user (
     first_name, 
     last_name, 
     is_admin,
+    is_owner,
     last_login_at
 )
 SELECT 
@@ -173,6 +175,7 @@ SELECT
     '$2b$10$N1bXtViY2DXyftPZ3s5DNehTnot0qhVaVNR3.fZS4qWB3AatHP1O2',
     'Tomi',
     'Atamamen',
+    TRUE,
     TRUE,
     CURRENT_TIMESTAMP
 FROM new_business;

@@ -408,7 +408,7 @@ function Settings() {
                     onChange={(e) => setBusinessProfile({...businessProfile, rsu_reference: e.target.value})}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Pick one familiar item (e.g. a standard can or a particular product box) to represent 1 Relative Space Unit. This would be used as a reference in all locations
+                    Pick one familiar item (e.g. a standard can or a particular product box) to represent 1 Relative Space Unit. This would be used as a reference in all locations and reports.
                   </p>
                 </div>
               </div>
@@ -583,6 +583,7 @@ function Settings() {
                                   className="form-checkbox h-4 w-4 text-primary"
                                   checked={member.is_admin}
                                   onChange={() => toggleAdminStatus(member.id)}
+                                  disabled={member.is_owner}
                                 />
                                 <span className="ml-2 text-sm">Admin</span>
                               </label>
@@ -591,6 +592,8 @@ function Settings() {
                               <button
                                 className="text-red-600 hover:text-red-900"
                                 onClick={() => removeStaff(member.id)}
+                                disabled={member.is_owner}
+                                title={member.is_owner ? "Owners cannot be removed" : "Remove this staff member"}
                               >
                                 <BsTrash />
                               </button>

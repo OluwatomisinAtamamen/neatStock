@@ -129,7 +129,8 @@ export async function getStaff(req, res) {
       `SELECT user_id as id,
               CONCAT(first_name, ' ', last_name) as name,
               username,
-              is_admin
+              is_admin,
+              is_owner
        FROM app_user 
        WHERE business_id = $1
        ORDER BY name`,
@@ -201,6 +202,7 @@ export async function addStaff(req, res) {
 }
 
 // Update a staff member's admin status
+// Update a staff member's admin status
 export async function updateStaffAdmin(req, res) {
   try {
     const businessId = req.session.businessId;
@@ -221,6 +223,18 @@ export async function updateStaffAdmin(req, res) {
       return res.status(400).json({ message: 'Admin status is required' });
     }
 
+    // Check if user is an owner before removing admin status
+    if (is_admin === false) {
+      const ownerCheck = await pool.query(
+        `SELECT is_owner FROM app_user WHERE user_id = $1 AND business_id = $2`,
+        [staffId, businessId]
+      );
+      
+      if (ownerCheck.rows.length > 0 && ownerCheck.rows[0].is_owner) {
+        return res.status(400).json({ message: 'Cannot remove admin status from business owner' });
+      }
+    }
+
     // Update the staff member
     const result = await pool.query(
       `UPDATE app_user 
@@ -229,7 +243,8 @@ export async function updateStaffAdmin(req, res) {
        RETURNING user_id as id, 
                  CONCAT(first_name, ' ', last_name) as name,
                  username,
-                 is_admin`,
+                 is_admin,
+                 is_owner`,
       [is_admin, staffId, businessId]
     );
 

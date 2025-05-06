@@ -27,7 +27,7 @@ export async function createUser(businessEmail, username, hashedPassword, firstN
     
     // Create user record with separate username field
     const userResult = await pool.query(
-      `INSERT INTO app_user (username, password_hash, first_name, last_name, business_id, is_admin) 
+      `INSERT INTO app_user (username, password_hash, first_name, last_name, business_id, is_owner) 
        VALUES ($1, $2, $3, $4, $5, true) 
        RETURNING user_id`,
       [username, hashedPassword, firstName, lastName, businessId]
