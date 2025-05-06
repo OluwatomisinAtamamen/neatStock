@@ -89,11 +89,13 @@ export async function login(req, res) {
       req.session.businessId = user.businessId;
       req.session.firstName = user.firstName;
       req.session.lastName = user.lastName;
+      req.session.isAdmin = user.is_admin;
       return res.json({
         userId: user.user_id,
         firstName: user.firstName,
         lastName: user.lastName,
         businessName: user.businessName,
+        isAdmin: user.is_admin,
         message: 'Login successful'
       });
     } else {
@@ -123,7 +125,8 @@ export function getAuthStatus(req, res) {
       isAuthenticated: true,
       userId: req.session.userId,
       firstName: req.session.firstName,
-      lastName: req.session.lastName
+      lastName: req.session.lastName,
+      isAdmin: req.session.isAdmin || false
     });
   } else {
     return res.json({ isAuthenticated: false });

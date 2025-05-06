@@ -91,19 +91,26 @@ CREATE TABLE sessions (
   expire TIMESTAMP NOT NULL
 );
 
--- Create trigger function to update location RSU usage
+-- Create trigger function to update location Relative Space Unit(RSU) usage
 CREATE OR REPLACE FUNCTION update_location_rsu_usage()
 RETURNS TRIGGER AS $$
 BEGIN
+    -- Update the current RSU usage for the affected location
+    -- RSU tracks how much capacity is being used in a location
     UPDATE location
     SET current_rsu_usage = (
+        -- Calculate total RSU usage by multiplying each item's quantity by its RSU value
+        -- COALESCE ensures we return 0 if there are no items in the location (rather than NULL)
         SELECT COALESCE(SUM(il.quantity * bi.rsu_value), 0)
         FROM item_location il
         JOIN business_item bi ON il.item_id = bi.item_id
+        -- Only consider items in the location that triggered this function
         WHERE il.location_id = NEW.location_id
     )
     WHERE location_id = NEW.location_id;
     
+    -- Return the NEW record to complete the trigger operation
+    -- This allows the original INSERT/UPDATE operation to proceed
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -138,24 +145,313 @@ FOR EACH ROW EXECUTE FUNCTION sync_item_total_quantity();
 
 
 
-INSERT INTO product_catalog (name, description, barcode, pack_size) VALUES
-('Standard Can of Beans', '400g tin of baked beans', '0123456789012', 1),
-('Family Pack Rice', '5 kg bag of long grain rice', '0123456789013', 1),
-('Small Spice Packet', '50 g mixed spice blend', '0123456789014', 1),
-('Mineral Water Bottle', '1.5 L bottle of still water', '0123456789015', 1),
-('Soda Can', '330 ml can of cola', '0123456789016', 1),
-('Loaf of Bread', '800 g sliced wholemeal loaf', '0123456789017', 1),
-('Egg Carton', '6 free-range eggs', '0123456789018', 1),
-('Milk Carton', '2 L semi-skimmed milk', '0123456789019', 1),
-('Chocolate Bar', '100 g milk chocolate', '0123456789020', 1),
-('Pack of Noodles', '5 × 70 g instant noodles', '0123456789021', 5),
-('Frozen Peas', '1 kg bag of frozen garden peas', '0123456789022', 1),
-('Cooking Oil Bottle', '1 L sunflower oil', '0123456789023', 1),
-('Toilet Roll Pack', '4 rolls of toilet paper', '0123456789024', 4),
-('Laundry Detergent', '2 L liquid detergent', '0123456789025', 1),
-('Dishwashing Tablets', '30-pack dishwasher tablets', '0123456789026', 30),
-('Cereal Box', '750 g cornflakes cereal', '0123456789027', 1),
-('Tea Bags', '80 tea bags, English Breakfast', '0123456789028', 80),
-('Paper Towels', '2 rolls of kitchen paper towels', '0123456789029', 2),
-('Butter Block', '250 g unsalted butter', '0123456789030', 1),
-('Tomato Ketchup', '500 g bottle of ketchup', '0123456789031', 1);
+
+-- Test data
+-- Start a transaction to ensure everything is created together
+BEGIN;
+
+-- Insert a business and get its ID
+WITH new_business AS (
+  INSERT INTO business (business_name, business_email, setup_complete, add1, add2, city, postcode, country, rsu_reference)
+  VALUES 
+  ('African Foods Ltd', 'contact@africanfoods.co.uk', TRUE, '123 High Street', 'Suite 4', 'London', 'E1 6AN    ', 'United Kingdom', 'Standard Can of Beans (400g)')
+  RETURNING business_id
+)
+-- Insert the admin user with the newly created business_id
+INSERT INTO app_user (
+    business_id, 
+    username, 
+    password_hash, 
+    first_name, 
+    last_name, 
+    is_admin,
+    last_login_at
+)
+SELECT 
+    business_id, 
+    'Tomi', 
+    '$2b$10$N1bXtViY2DXyftPZ3s5DNehTnot0qhVaVNR3.fZS4qWB3AatHP1O2',
+    'Tomi',
+    'Atamamen',
+    TRUE,
+    CURRENT_TIMESTAMP
+FROM new_business;
+
+COMMIT;
+
+-- Now insert the categories, locations, and products
+DO $$
+DECLARE
+    business_id_val UUID;
+BEGIN
+    SELECT business_id INTO business_id_val FROM business WHERE business_name = 'African Foods Ltd';
+
+    -- Insert categories
+    INSERT INTO category (business_id, category_name, description)
+    VALUES
+        (business_id_val, 'Grains & Rice', 'All types of rice, wheat, millet and other grains'),
+        (business_id_val, 'Canned Goods', 'Preserved items in cans and jars'),
+        (business_id_val, 'Spices', 'Herbs, seasonings and spice mixes'),
+        (business_id_val, 'Beverages', 'Drinks, juices and water'),
+        (business_id_val, 'Snacks', 'Chips, biscuits and other snack items'),
+        (business_id_val, 'Meat & Fish', 'Frozen and dried meat and fish products'),
+        (business_id_val, 'Oils & Sauces', 'Cooking oils, condiments and sauces'),
+        (business_id_val, 'Fresh Produce', 'Vegetables, fruits and tubers'),
+        (business_id_val, 'Baking Supplies', 'Flour, sugar and baking ingredients'),
+        (business_id_val, 'Household', 'Non-food household items');
+
+    -- Insert locations
+    INSERT INTO location (business_id, location_name, location_code, description, capacity_rsu, image_url)
+    VALUES
+        (business_id_val, 'Main Shopfloor', 'SF-MAIN', 'Front of store main display area', 500, '/uploads/locations/shopfloor.jpg'),
+        (business_id_val, 'Front Window', 'SF-WINDOW', 'Window display area', 50, '/uploads/locations/window.jpg'),
+        (business_id_val, 'Cold Section', 'SF-COLD', 'Refrigerated display cases', 150, '/uploads/locations/cold.jpg'),
+        (business_id_val, 'Checkout Area', 'SF-CHECKOUT', 'Items near registers for impulse buys', 30, '/uploads/locations/checkout.jpg'),
+        (business_id_val, 'Main Warehouse', 'WH-MAIN', 'Primary storage area', 2000, '/uploads/locations/warehouse.jpg'),
+        (business_id_val, 'Cold Storage', 'WH-COLD', 'Cold storage room', 300, '/uploads/locations/coldstorage.jpg'),
+        (business_id_val, 'Back Office', 'OFFICE', 'Office with excess storage', 100, '/uploads/locations/office.jpg'),
+        (business_id_val, 'High Value Cabinet', 'SF-SECURE', 'Locked cabinet for high-value items', 40, '/uploads/locations/cabinet.jpg'),
+        (business_id_val, 'Seasonal Area', 'SF-SEASON', 'Display for seasonal items', 120, '/uploads/locations/seasonal.jpg'),
+        (business_id_val, 'Overflow Storage', 'WH-OVER', 'Additional warehouse space for peak season', 800, '/uploads/locations/overflow.jpg');
+    
+    -- Insert product catalog items
+    INSERT INTO product_catalog (name, description, barcode, pack_size)
+    VALUES
+        ('Jollof Rice Mix', 'Pre-mixed spice for making Jollof Rice', '5060123450001', 1),
+        ('Palm Oil 1L', 'Pure Red Palm Oil', '5060123450002', 1),
+        ('Plantain Chips 150g', 'Crispy fried plantain chips', '5060123450003', 1),
+        ('Yam Flour 1kg', 'Premium ground yam flour for fufu', '5060123450004', 1),
+        ('Scotch Bonnet Peppers 200g', 'Fresh hot peppers', '5060123450005', 1),
+        ('Dried Fish 500g', 'Smoked and dried fish', '5060123450006', 1),
+        ('Egusi Seeds 500g', 'Melon seeds for soup', '5060123450007', 1),
+        ('Fufu Flour 1kg', 'Plantain-based fufu flour', '5060123450008', 1),
+        ('African Honey 250ml', 'Pure wild honey', '5060123450009', 1),
+        ('Chin Chin 300g', 'Sweet fried snack', '5060123450010', 1);
+END $$;
+
+-- Insert business items and connect to locations in a single transaction
+WITH 
+business_id_val AS (SELECT business_id FROM business WHERE business_name = 'African Foods Ltd'),
+categories AS (
+    SELECT category_id, category_name FROM category 
+    WHERE business_id = (SELECT * FROM business_id_val)
+),
+locations AS (
+    SELECT location_id, location_name FROM location 
+    WHERE business_id = (SELECT * FROM business_id_val)
+),
+catalog_items AS (
+    SELECT catalog_id, name FROM product_catalog
+),
+-- Insert business items and return their IDs
+inserted_items AS (
+    INSERT INTO business_item (
+        business_id, catalog_id, category_id, item_name, 
+        sku, unit_price, cost_price, quantity_in_stock, 
+        rsu_value, min_stock_level, image_url
+    )
+    VALUES
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Jollof Rice Mix'),
+            (SELECT category_id FROM categories WHERE category_name = 'Spices'),
+            'Jollof Rice Seasoning Mix',
+            'JLF-001', 3.99, 1.50, 0, 0.5, 10,
+            '/uploads/items/jollof-mix.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Palm Oil 1L'),
+            (SELECT category_id FROM categories WHERE category_name = 'Oils & Sauces'),
+            'Traditional Red Palm Oil 1L',
+            'OIL-101', 8.99, 4.25, 0, 1.0, 5,
+            '/uploads/items/palm-oil.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Plantain Chips 150g'),
+            (SELECT category_id FROM categories WHERE category_name = 'Snacks'),
+            'Sweet Plantain Chips',
+            'SNK-201', 1.99, 0.75, 0, 0.5, 15,
+            '/uploads/items/plantain-chips.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Yam Flour 1kg'),
+            (SELECT category_id FROM categories WHERE category_name = 'Baking Supplies'),
+            'Premium Yam Flour',
+            'FLR-301', 7.50, 3.25, 0, 1.5, 8,
+            '/uploads/items/yam-flour.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Scotch Bonnet Peppers 200g'),
+            (SELECT category_id FROM categories WHERE category_name = 'Fresh Produce'),
+            'Fresh Scotch Bonnet Peppers',
+            'VEG-101', 2.99, 1.20, 0, 0.5, 5,
+            '/uploads/items/scotch-bonnet.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Dried Fish 500g'),
+            (SELECT category_id FROM categories WHERE category_name = 'Meat & Fish'),
+            'Smoked Dried Fish',
+            'FSH-001', 12.99, 6.50, 0, 1.0, 3,
+            '/uploads/items/dried-fish.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Egusi Seeds 500g'),
+            (SELECT category_id FROM categories WHERE category_name = 'Grains & Rice'),
+            'Premium Egusi Seeds',
+            'EGS-001', 4.99, 2.25, 0, 1.0, 7,
+            '/uploads/items/egusi.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Fufu Flour 1kg'),
+            (SELECT category_id FROM categories WHERE category_name = 'Grains & Rice'),
+            'Ready-mix Fufu Flour',
+            'FFU-001', 6.99, 3.00, 0, 1.5, 6,
+            '/uploads/items/fufu-flour.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'African Honey 250ml'),
+            (SELECT category_id FROM categories WHERE category_name = 'Canned Goods'),
+            'Pure Wild Honey',
+            'HNY-201', 9.99, 4.75, 0, 0.5, 4,
+            '/uploads/items/honey.jpg'
+        ),
+        (
+            (SELECT * FROM business_id_val), 
+            (SELECT catalog_id FROM catalog_items WHERE name = 'Chin Chin 300g'),
+            (SELECT category_id FROM categories WHERE category_name = 'Snacks'),
+            'Sweet Chin Chin',
+            'SNK-405', 3.49, 1.25, 0, 0.5, 12,
+            '/uploads/items/chin-chin.jpg'
+        )
+    RETURNING item_id, item_name
+)
+-- Now insert item-location relationships with quantities
+INSERT INTO item_location (item_id, location_id, quantity)
+VALUES
+    -- Jollof Rice Mix in two locations
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Jollof Rice Seasoning Mix'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Shopfloor'),
+        8
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Jollof Rice Seasoning Mix'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Warehouse'),
+        25
+    ),
+    
+    -- Palm Oil in two locations
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Traditional Red Palm Oil 1L'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Shopfloor'),
+        4
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Traditional Red Palm Oil 1L'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Warehouse'),
+        12
+    ),
+    
+    -- Plantain Chips in two locations
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Sweet Plantain Chips'),
+        (SELECT location_id FROM locations WHERE location_name = 'Checkout Area'),
+        20
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Sweet Plantain Chips'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Warehouse'),
+        45
+    ),
+    
+    -- Yam Flour in two locations
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Premium Yam Flour'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Shopfloor'),
+        6
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Premium Yam Flour'),
+        (SELECT location_id FROM locations WHERE location_name = 'Overflow Storage'),
+        15
+    ),
+    
+    -- Scotch Bonnet Peppers in two locations
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Fresh Scotch Bonnet Peppers'),
+        (SELECT location_id FROM locations WHERE location_name = 'Cold Section'),
+        3
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Fresh Scotch Bonnet Peppers'),
+        (SELECT location_id FROM locations WHERE location_name = 'Cold Storage'),
+        8
+    ),
+    
+    -- Dried Fish in two locations - Low stock item (below min_stock_level)
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Smoked Dried Fish'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Shopfloor'),
+        2
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Smoked Dried Fish'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Warehouse'),
+        0
+    ),
+    
+    -- Egusi Seeds in two locations
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Premium Egusi Seeds'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Shopfloor'),
+        5
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Premium Egusi Seeds'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Warehouse'),
+        18
+    ),
+    
+    -- Fufu Flour in two locations
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Ready-mix Fufu Flour'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Shopfloor'),
+        4
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Ready-mix Fufu Flour'),
+        (SELECT location_id FROM locations WHERE location_name = 'Overflow Storage'),
+        10
+    ),
+    
+    -- African Honey in two locations - Another low stock item
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Pure Wild Honey'),
+        (SELECT location_id FROM locations WHERE location_name = 'High Value Cabinet'),
+        2
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Pure Wild Honey'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Warehouse'),
+        1
+    ),
+    
+    -- Chin Chin in two locations
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Sweet Chin Chin'),
+        (SELECT location_id FROM locations WHERE location_name = 'Checkout Area'),
+        5
+    ),
+    (
+        (SELECT item_id FROM inserted_items WHERE item_name = 'Sweet Chin Chin'),
+        (SELECT location_id FROM locations WHERE location_name = 'Main Warehouse'),
+        20
+    );

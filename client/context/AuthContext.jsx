@@ -19,7 +19,8 @@ export function AuthProvider({ children }) {
           setUser({
             userId: response.data.userId,
             firstName: response.data.firstName,
-            lastName: response.data.lastName
+            lastName: response.data.lastName,
+            isAdmin: response.data.isAdmin
           });
         }
       } catch (error) {
@@ -42,7 +43,8 @@ export function AuthProvider({ children }) {
         userId: response.data.userId,
         firstName: response.data.firstName,
         lastName: response.data.lastName,
-        businessName: response.data.businessName
+        businessName: response.data.businessName,
+        isAdmin: response.data.isAdmin
       });
       return { success: true };
     } catch (error) {
@@ -71,7 +73,8 @@ export function AuthProvider({ children }) {
         login,
         logout,
         isAuthenticated: !!user,
-        loading
+        loading,
+        isAdmin: user?.isAdmin || false
       }}
     >
       {children}

@@ -2,6 +2,28 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BsPlusLg, BsSearch, BsPencil, BsTrash, BsXLg } from 'react-icons/bs';
 
+/**
+ * Locations component for managing warehouse or storage locations.
+ * 
+ * This component provides a complete interface for viewing, searching, adding, editing,
+ * and deleting location records. It displays locations in a responsive grid layout with
+ * space utilization visualizations.
+ * 
+ * Features:
+ * - Search locations by name or code
+ * - Sort locations by name or space utilization
+ * - Add new locations with image upload capability
+ * - Edit existing location details
+ * - Delete locations with confirmation
+ * - Visual representation of space utilization
+ * - Toast notifications for operation feedback
+ * 
+ * RSU (Relative Space Unit) represents a standardized unit of storage capacity
+ * used to measure and compare available space across different locations.
+ * 
+ * @returns {JSX.Element} A section containing location management UI with
+ * search controls, location grid display, and add/edit panel.
+ */
 function Locations() {
   // State for locations data
   const [locations, setLocations] = useState([]);
@@ -209,7 +231,7 @@ function Locations() {
     }
   };
 
-  // Calculate utilisation percentage
+  // Calculate Relative space unit (RSU) utilisation percentage
   const calculateUtilisation = (current, capacity) => {
     return (current / capacity) * 100;
   };

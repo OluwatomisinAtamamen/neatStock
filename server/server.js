@@ -66,6 +66,18 @@ app.use('/data/users', authRoutes);
 app.use('/data/locations', locationRoutes);
 app.use('/data/search', searchRoutes);
 app.use('/data/inventory', inventoryRoutes);
+
+// Business profile routes
+app.get('/data/settings/business', settingsController.getBusinessProfile);
+app.put('/data/settings/business', settingsController.updateBusinessProfile);
+
+// Staff management routes
+app.get('/data/settings/staff', settingsController.getStaff);
+app.post('/data/settings/staff', settingsController.addStaff);
+app.patch('/data/settings/staff/:staffId', settingsController.updateStaffAdmin);
+app.delete('/data/settings/staff/:staffId', settingsController.deleteStaff);
+
+// Category management routes
 app.get('/data/settings/categories', settingsController.getCategories);
 app.post('/data/settings/categories', settingsController.createCategory);
 app.put('/data/settings/categories/:categoryId', settingsController.updateCategory);

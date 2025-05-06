@@ -10,10 +10,10 @@ export const pool = new Pool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   database: process.env.DB_DATABASE,
-  ssl: { rejectUnauthorized: false } // Disable certificate validation for development
+  ssl: { rejectUnauthorized: false }
 });
 
-// Updated createUser to take businessEmail and username
+// function to create a new user and business
 export async function createUser(businessEmail, username, hashedPassword, firstName, lastName, businessName) {
   try {
     // Create business record
@@ -43,12 +43,12 @@ export async function createUser(businessEmail, username, hashedPassword, firstN
   }
 }
 
-// Update getUser to lookup by username (login uses username)
+// function to get user by username
 export async function getUser(username) {
   try {
     const result = await pool.query(
       `SELECT u.user_id, u.password_hash as "hashedPassword", u.first_name as "firstName", 
-              u.last_name as "lastName", b.business_name as "businessName", u.business_id as "businessId"
+              u.last_name as "lastName", u.is_admin, b.business_name as "businessName", u.business_id as "businessId"
        FROM app_user u
        JOIN business b ON u.business_id = b.business_id
        WHERE u.username = $1`,
