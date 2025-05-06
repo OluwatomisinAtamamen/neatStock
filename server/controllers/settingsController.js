@@ -15,11 +15,17 @@ export async function getBusinessProfile(req, res) {
     }
 
     const result = await pool.query(
-      `SELECT business_name as "businessName", 
-       business_email as "businessEmail",
-       CONCAT(add1, ', ', add2, ', ', city, ', ', postcode, ', ', country) as address
-        FROM business 
-        WHERE business_id = $1`,
+      `SELECT 
+        business_name as "businessName", 
+        business_email as "businessEmail",
+        add1,
+        add2,
+        city,
+        postcode,
+        country,
+        rsu_reference
+       FROM business 
+       WHERE business_id = $1`,
       [businessId]
     );
 
@@ -46,23 +52,53 @@ export async function updateBusinessProfile(req, res) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const { businessName, businessEmail, address } = req.body;
+    const { 
+      businessName, 
+      businessEmail, 
+      add1, 
+      add2, 
+      city, 
+      postcode, 
+      country, 
+      rsu_reference 
+    } = req.body;
 
     if (!businessName || !businessEmail) {
       return res.status(400).json({ message: 'Business name and email are required' });
     }
 
-    // Simplified query: store everything in available fields
+    // Update all fields individually
     const result = await pool.query(
       `UPDATE business 
         SET business_name = $1,
             business_email = $2,
-            add1 = $3        /* Store full address in add1 */
-        WHERE business_id = $4
-        RETURNING business_name as "businessName", 
-                 business_email as "businessEmail",
-                 add1 as address`,
-      [businessName, businessEmail, address, businessId]
+            add1 = $3,
+            add2 = $4,
+            city = $5,
+            postcode = $6,
+            country = $7,
+            rsu_reference = $8
+        WHERE business_id = $9
+        RETURNING 
+            business_name as "businessName", 
+            business_email as "businessEmail",
+            add1,
+            add2,
+            city,
+            postcode,
+            country,
+            rsu_reference`,
+      [
+        businessName, 
+        businessEmail, 
+        add1 || '', 
+        add2 || '', 
+        city || '', 
+        postcode || '', 
+        country || '', 
+        rsu_reference || '', 
+        businessId
+      ]
     );
 
     if (result.rows.length === 0) {

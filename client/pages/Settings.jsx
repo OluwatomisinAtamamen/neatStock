@@ -15,7 +15,12 @@ function Settings() {
   const [businessProfile, setBusinessProfile] = useState({
     businessName: '',
     businessEmail: '',
-    address: '',
+    add1: '',
+    add2: '',
+    city: '',
+    postcode: '',
+    country: '',
+    rsu_reference: '',
   });
   
   // Toast notifications
@@ -330,41 +335,81 @@ function Settings() {
                     onChange={(e) => setBusinessProfile({...businessProfile, businessEmail: e.target.value})}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
+                    Address Line 1
                   </label>
                   <input
                     type="text"
                     className="w-full p-2 border border-gray-300 rounded"
-                    value={businessProfile.address}
-                    onChange={(e) => setBusinessProfile({...businessProfile, address: e.target.value})}
+                    value={businessProfile.add1}
+                    onChange={(e) => setBusinessProfile({...businessProfile, add1: e.target.value})}
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone
+                    Address Line 2
                   </label>
                   <input
                     type="text"
                     className="w-full p-2 border border-gray-300 rounded"
-                    value={businessProfile.phone}
-                    onChange={(e) => setBusinessProfile({...businessProfile, phone: e.target.value})}
+                    value={businessProfile.add2}
+                    onChange={(e) => setBusinessProfile({...businessProfile, add2: e.target.value})}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={businessProfile.city}
+                    onChange={(e) => setBusinessProfile({...businessProfile, city: e.target.value})}
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Person
+                    Postal Code
                   </label>
                   <input
                     type="text"
                     className="w-full p-2 border border-gray-300 rounded"
-                    value={businessProfile.contactPerson}
-                    onChange={(e) => setBusinessProfile({...businessProfile, contactPerson: e.target.value})}
+                    value={businessProfile.postcode}
+                    onChange={(e) => setBusinessProfile({...businessProfile, postcode: e.target.value})}
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={businessProfile.country}
+                    onChange={(e) => setBusinessProfile({...businessProfile, country: e.target.value})}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    RSU Reference 
+                    <span className="ml-1 text-xs text-gray-500">(Relative Space Unit)</span>
+                  </label>
+                  <input
+                    type="text" 
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={businessProfile.rsu_reference}
+                    onChange={(e) => setBusinessProfile({...businessProfile, rsu_reference: e.target.value})}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Pick one familiar item (e.g. a standard can or a particular product box) to represent 1 Relative Space Unit. This would be used as a reference in all locations
+                  </p>
                 </div>
               </div>
               

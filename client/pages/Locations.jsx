@@ -236,6 +236,12 @@ function Locations() {
     return (current / capacity) * 100;
   };
 
+  //function for visual display capping
+  const getDisplayWidth = (current, capacity) => {
+    // Cap display width at 100% but maintain true percentage for color
+    return Math.min(((current / capacity) * 100), 100) + '%';
+  };
+
   // Get colour class based on utilisation
   const getUtilisationColourClass = (utilisation) => {
     if (utilisation >= 90) return 'bg-red-500';
@@ -340,7 +346,7 @@ function Locations() {
               <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
                 <div 
                   className={`h-2.5 rounded-full ${getUtilisationColourClass(calculateUtilisation(location.current_rsu_usage, location.capacity_rsu))}`}
-                  style={{ width: `${calculateUtilisation(location.current_rsu_usage, location.capacity_rsu)}%` }}
+                  style={{ width: getDisplayWidth(location.current_rsu_usage, location.capacity_rsu) }}
                 ></div>
               </div>
               
