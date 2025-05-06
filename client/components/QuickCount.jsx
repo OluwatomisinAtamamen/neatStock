@@ -12,32 +12,22 @@ function QuickCount({ onEditItem }) {
   const [success, setSuccess] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Add state for tracking recently edited items
-  const [recentlyEdited, setRecentlyEdited] = useState(() => {
-    const saved = localStorage.getItem('neatstock-recently-edited');
-    return saved ? JSON.parse(saved) : {};
-  });
+  // Initialize with empty object, no localStorage loading initially
+  const [recentlyEdited, setRecentlyEdited] = useState({});
 
   // Filter items by search term and location
   const filteredItems = items.filter(item => {
-    // Only show items for the selected location
     if (!selectedLocation) return false;
-    
-    // Check if item belongs to selected location
-    const belongsToLocation = item.locations && 
-      item.locations.includes(
-        locations.find(l => l.location_id === selectedLocation)?.location_name
-      );
     
     // Apply search filter if search term exists
     if (searchTerm) {
-      return belongsToLocation && (
+      return (
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.sku && item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+        (item.barcode && item.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
-    return belongsToLocation;
+    return true;
   });
 
   // Load locations on component mount
@@ -57,6 +47,7 @@ function QuickCount({ onEditItem }) {
   useEffect(() => {
     if (!selectedLocation) {
       setItems([]);
+      setCounts({});
       return;
     }
     
@@ -71,6 +62,9 @@ function QuickCount({ onEditItem }) {
           }
         });
         setItems(res.data.items || []);
+        
+        // Clear counts when changing location
+        setCounts({});
       } catch (error) {
         console.error('Error fetching items:', error);
       } finally {
@@ -83,6 +77,27 @@ function QuickCount({ onEditItem }) {
 
   // Check for recently edited items and maintain the highlighting
   useEffect(() => {
+    // Load recently edited from localStorage once on init
+    const saved = localStorage.getItem('neatstock-recently-edited');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const now = Date.now();
+        const recent = {};
+        
+        // Only keep items edited within the last 8 hours
+        Object.entries(parsed).forEach(([id, timestamp]) => {
+          if (now - timestamp < 8 * 60 * 60 * 1000) {
+            recent[id] = timestamp;
+          }
+        });
+        
+        setRecentlyEdited(recent);
+      } catch (err) {
+        console.error("Error parsing recently edited items", err);
+      }
+    }
+    
     const interval = setInterval(() => {
       setRecentlyEdited(prev => {
         const current = { ...prev };
@@ -109,28 +124,51 @@ function QuickCount({ onEditItem }) {
 
   // Handle count input
   const handleCountChange = (id, value) => {
-    setCounts({ ...counts, [id]: value });
+    // Validate input is either empty or numeric
+    if (value === '' || /^\d+$/.test(value)) {
+      setCounts(prevCounts => ({
+        ...prevCounts,
+        [id]: value
+      }));
+    }
   };
 
   // Save counts
   const handleSave = async () => {
     if (!selectedLocation) return;
     
+    // Filter out any invalid items
+    const validItems = {};
+    let hasInvalidItems = false;
+    
+    Object.entries(counts).forEach(([id, value]) => {
+      if (id && id !== 'undefined' && value !== '') {
+        validItems[id] = { count: parseInt(value) };
+      } else if (value !== '') {
+        hasInvalidItems = true;
+      }
+    });
+    
+    if (hasInvalidItems) {
+      alert('Some items have invalid IDs and cannot be saved.');
+    }
+    
+    if (Object.keys(validItems).length === 0) {
+      alert('No valid items to save.');
+      return;
+    }
+    
     setLoading(true);
     try {
       await axios.post('/data/inventory/stocktake', {
         locationId: selectedLocation,
-        items: Object.fromEntries(
-          Object.entries(counts)
-            .filter(([, v]) => v !== '')
-            .map(([id, count]) => [id, { count: parseInt(count) }])
-        )
+        items: validItems
       });
       
-      // Mark items as recently edited
+      // Mark only successfully updated items as recently edited
       const updatedItems = { ...recentlyEdited };
-      Object.keys(counts).forEach(id => {
-        updatedItems[id] = Date.now();
+      Object.keys(validItems).forEach(id => {
+        updatedItems[String(id)] = Date.now(); // Ensure ID is a string for consistency
       });
       setRecentlyEdited(updatedItems);
       localStorage.setItem('neatstock-recently-edited', JSON.stringify(updatedItems));
@@ -151,7 +189,7 @@ function QuickCount({ onEditItem }) {
       
     } catch (error) {
       console.error('Error saving counts:', error);
-      alert('Failed to save counts. Please try again.');
+      alert(`Failed to save counts: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -159,11 +197,6 @@ function QuickCount({ onEditItem }) {
 
   // Handle edit button click
   const handleEdit = (item) => {
-    const updatedItems = { ...recentlyEdited };
-    updatedItems[item.item_id] = Date.now();
-    setRecentlyEdited(updatedItems);
-    localStorage.setItem('neatstock-recently-edited', JSON.stringify(updatedItems));
-    
     if (onEditItem) onEditItem(item);
   };
 
@@ -200,7 +233,7 @@ function QuickCount({ onEditItem }) {
             <input
               type="text"
               className="border rounded p-2 w-full"
-              placeholder="Search items by name or SKU..."
+              placeholder="Search items by name or barcode..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               disabled={loading || !selectedLocation}
@@ -227,7 +260,7 @@ function QuickCount({ onEditItem }) {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="p-3 text-left">Name</th>
-                  <th className="p-3 text-left">SKU</th>
+                  <th className="p-3 text-left">Barcode</th>
                   <th className="p-3 text-left">Current Count</th>
                   <th className="p-3 text-left">New Count</th>
                   <th className="p-3 text-left">+/-</th>
@@ -250,28 +283,29 @@ function QuickCount({ onEditItem }) {
                   </tr>
                 ) : (
                   filteredItems.map(item => {
-                    const diff =
-                      counts[item.item_id] === undefined || counts[item.item_id] === ''
-                        ? ''
-                        : parseInt(counts[item.item_id]) - item.quantity;
+                    const currentCount = counts[item.id] || '';
+                    const diff = currentCount === '' ? '' 
+                      : parseInt(currentCount) - item.quantity;
                     
-                    const isRecentlyEdited = recentlyEdited[item.item_id] ? true : false;
+
+                    const isRecentlyEdited = Boolean(recentlyEdited[item.id]);
                     
                     return (
                       <tr 
-                        key={item.item_id || item.id} 
+                        key={item.id} 
                         className={`border-t ${isRecentlyEdited ? 'bg-green-50' : ''}`}
                       >
                         <td className="p-3">{item.name}</td>
-                        <td className="p-3">{item.sku || 'N/A'}</td>
+                        <td className="p-3">{item.barcode || 'N/A'}</td>
                         <td className="p-3">{item.quantity}</td>
                         <td className="p-3">
                           <input
                             type="number"
                             min="0"
                             className="border rounded p-1 w-20"
-                            value={counts[item.item_id] || ''}
-                            onChange={e => handleCountChange(item.item_id, e.target.value)}
+                            value={currentCount}
+                          
+                            onChange={e => handleCountChange(item.id, e.target.value)}
                             disabled={loading}
                           />
                         </td>

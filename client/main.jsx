@@ -13,7 +13,6 @@ import Signup from './pages/Signup.jsx';
 import Reports from './pages/Reports.jsx';
 import Settings from './pages/Settings.jsx';
 import Home from './pages/Home.jsx';
-import Items from './pages/Items.jsx';
 import Search from './pages/Search.jsx';
 import ErrorPage from './pages/ErrorPage.jsx';
 import PaymentSuccess from './pages/PaymentSuccess.jsx';
@@ -37,7 +36,6 @@ createRoot(document.getElementById('root')).render(
           <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Home />} />
             <Route path="/search" element={<Search />} />
-            <Route path="/items" element={<Items />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/stocktake" element={<Stocktake />} />
