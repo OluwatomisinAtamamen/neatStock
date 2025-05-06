@@ -33,7 +33,6 @@ export async function searchItems(req, res) {
           bi.item_id AS id,
           bi.item_name AS name,
           bi.sku,
-          bi.catalog_id,
           pc.barcode,
           bi.quantity_in_stock AS quantity,
           bi.rsu_value,
@@ -118,7 +117,7 @@ export async function searchItems(req, res) {
     if (locationId) {
       whereClause += ` AND (is_from_catalog = TRUE AND EXISTS (
           SELECT 1 FROM item_location il 
-          WHERE il.item_id = bi.item_id AND il.location_id = $${++paramIndex}
+          WHERE il.item_id = id AND il.location_id = $${++paramIndex}
       ))`;
       params.push(locationId);
     }

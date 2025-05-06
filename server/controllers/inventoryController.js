@@ -9,6 +9,37 @@ export async function addItem(req, res) {
   
     const businessId = req.session.businessId;
     const itemData = req.body;
+    let catalogId = itemData.catalogId;
+
+    // If item is completely new (not in catalog yet)
+    if (itemData.isNewCatalogItem) {
+      // Create entry in product_catalog first
+      const catalogResult = await client.query(`
+        INSERT INTO product_catalog (name, description, barcode, pack_size)
+        VALUES ($1, $2, $3, $4)
+        RETURNING catalog_id
+      `, [
+        itemData.name,
+        itemData.description || null,
+        itemData.barcode,
+        parseInt(itemData.packSize) || 1
+      ]);
+      
+      // Get the new catalog ID
+      catalogId = catalogResult.rows[0].catalog_id;
+    } else if (catalogId) {
+      // Verify that the catalog item exists if catalogId is provided
+      const catalogCheck = await client.query(`
+        SELECT catalog_id FROM product_catalog 
+        WHERE catalog_id = $1
+      `, [catalogId]);
+
+      if (catalogCheck.rows.length === 0) {
+        throw new Error('Invalid catalog item. Please select a valid item from the catalog or create a new one.');
+      }
+    } else {
+      throw new Error('Must either create a new catalog item or select an existing one.');
+    }
 
     // First check if this item already exists in this location
     const locationCheck = await client.query(`
@@ -18,32 +49,24 @@ export async function addItem(req, res) {
       WHERE bi.business_id = $1 
       AND il.location_id = $2
       AND bi.catalog_id = $3
-    `, [businessId, itemData.locationId, itemData.catalogId]);
+    `, [businessId, itemData.locationId, catalogId]);
 
     if (locationCheck.rows.length > 0) {
-      // Item already exists in this location
       throw new Error('This item already exists in the selected location. Please use the stocktake section to update its quantity.');
     }
 
     let itemId;
     
-    // Check if the item already exists in the business's inventory
-    const existingItemQuery = `
+    const existingItemResult = await client.query(`
       SELECT item_id 
       FROM business_item 
       WHERE business_id = $1 
-      AND catalog_id = $2`;
-    
-    const existingItemResult = await client.query(
-      existingItemQuery, 
-      [businessId, itemData.catalogId]
-    );
+      AND catalog_id = $2
+    `, [businessId, catalogId]);
     
     if (existingItemResult.rows.length > 0) {
-      // Item exists, use its ID
       itemId = existingItemResult.rows[0].item_id;
     } else {
-      // Create a new business_item
       const newItemResult = await client.query(`
         INSERT INTO business_item (
           business_id, catalog_id, category_id, item_name, sku, 
@@ -52,7 +75,7 @@ export async function addItem(req, res) {
         RETURNING item_id
       `, [
         businessId, 
-        itemData.catalogId,
+        catalogId,
         itemData.categoryId || null,
         itemData.name,
         itemData.sku || null,
@@ -70,8 +93,6 @@ export async function addItem(req, res) {
     await client.query(`
       INSERT INTO item_location (location_id, item_id, quantity)
       VALUES ($1, $2, $3)
-      ON CONFLICT (location_id, item_id) 
-      DO UPDATE SET quantity = item_location.quantity + EXCLUDED.quantity
     `, [
       itemData.locationId, 
       itemId, 
@@ -82,7 +103,8 @@ export async function addItem(req, res) {
     
     res.status(201).json({ 
       message: 'Item added successfully',
-      itemId 
+      itemId,
+      catalogId
     });
   } catch (error) {
     await client.query('ROLLBACK');
@@ -216,6 +238,8 @@ export async function deleteItem(req, res) {
 
 // Save stocktake counts
 export async function saveStocktake(req, res) {
+  const client = await pool.connect();
+  
   try {
     const businessId = req.session.businessId;
     if (!businessId) {
@@ -224,107 +248,58 @@ export async function saveStocktake(req, res) {
     
     const { locationId, items } = req.body;
     
+    if (!locationId) {
+      return res.status(400).json({ message: 'Location ID is required' });
+    }
+    
     if (!items || Object.keys(items).length === 0) {
       return res.status(400).json({ message: 'No items to update' });
     }
     
-    // Start a transaction
-    const client = await pool.connect();
+    await client.query('BEGIN');
     
-    try {
-      await client.query('BEGIN');
+    // Process each item - simpler approach
+    const updatedItems = [];
+    
+    for (const itemId in items) {
+      const { count } = items[itemId];
       
-      // Create stocktake record
-      const stocktakeQuery = `
-        INSERT INTO stocktake (business_id, location_id, created_by)
-        VALUES ($1, $2, $3)
-        RETURNING stocktake_id
-      `;
-      
-      const stocktakeResult = await client.query(stocktakeQuery, [
-        businessId, 
-        locationId, 
-        req.session.userId
-      ]);
-      
-      const stocktakeId = stocktakeResult.rows[0].stocktake_id;
-      
-      // Process each item
-      for (const itemId in items) {
-        const { count, note } = items[itemId];
-        
-        // Record the stocktake entry
-        const entryQuery = `
-          INSERT INTO stocktake_entry (stocktake_id, item_id, counted_quantity, note)
-          VALUES ($1, $2, $3, $4)
-        `;
-        
-        await client.query(entryQuery, [stocktakeId, itemId, count, note || null]);
-        
-        // Update the item quantity in the specified location or globally
-        if (locationId) {
-          // Update in specific location
-          const locationUpdateQuery = `
-            UPDATE item_location
-            SET quantity = $1
-            WHERE item_id = $2 AND location_id = $3
-          `;
-          
-          await client.query(locationUpdateQuery, [count, itemId, locationId]);
-        } else {
-          // Get current locations for the item
-          const locationsQuery = `
-            SELECT location_id, quantity
-            FROM item_location
-            WHERE item_id = $1
-          `;
-          
-          const locationsResult = await client.query(locationsQuery, [itemId]);
-          
-          if (locationsResult.rows.length === 0) {
-            // No locations exist yet, create a default one
-            const defaultLocationQuery = `
-              INSERT INTO item_location (item_id, location_id, quantity)
-              VALUES ($1, 
-                (SELECT location_id FROM location WHERE business_id = $2 ORDER BY created_at ASC LIMIT 1),
-                $3
-              )
-            `;
-            
-            await client.query(defaultLocationQuery, [itemId, businessId, count]);
-          } else if (locationsResult.rows.length === 1) {
-            // Only one location exists, update it
-            const singleLocationUpdate = `
-              UPDATE item_location
-              SET quantity = $1
-              WHERE item_id = $2 AND location_id = $3
-            `;
-            
-            await client.query(singleLocationUpdate, [
-              count, 
-              itemId, 
-              locationsResult.rows[0].location_id
-            ]);
-          }
-          // If multiple locations exist, we can't update them all without location context
-        }
+      if (count === undefined || count === null) {
+        continue;
       }
       
-      // Commit the transaction
-      await client.query('COMMIT');
+      // Use UPSERT pattern - insert if not exists, update if exists
+      const upsertQuery = `
+        INSERT INTO item_location (location_id, item_id, quantity)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (location_id, item_id) 
+        DO UPDATE SET quantity = $3
+        RETURNING item_id
+      `;
       
-      res.status(200).json({ 
-        message: 'Stocktake saved successfully',
-        stocktakeId
-      });
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
+      const result = await client.query(upsertQuery, [
+        locationId,
+        itemId,
+        parseInt(count)
+      ]);
+      
+      if (result.rows.length > 0) {
+        updatedItems.push(itemId);
+      }
     }
+    
+    await client.query('COMMIT');
+    
+    res.status(200).json({ 
+      message: 'Stocktake saved successfully',
+      updatedItems,
+      updatedCount: updatedItems.length
+    });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error saving stocktake:', error);
     res.status(500).json({ message: 'Error saving stocktake', error: error.message });
+  } finally {
+    client.release();
   }
 }
