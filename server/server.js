@@ -13,6 +13,7 @@ import locationRoutes from './routes/locations.js';
 import searchRoutes from './routes/search.js';
 import inventoryRoutes from './routes/inventory.js';
 import * as settingsController from './controllers/settingsController.js';
+import { getDashboardData } from './controllers/dashboardController.js';
 import reportsRoutes from './routes/reports.js';
 import { initializeSnapshotJob } from './snapshotJob.js';
 
@@ -79,12 +80,15 @@ app.get('/data/settings/staff', settingsController.getStaff);
 app.post('/data/settings/staff', settingsController.addStaff);
 app.patch('/data/settings/staff/:staffId', settingsController.updateStaffAdmin);
 app.delete('/data/settings/staff/:staffId', settingsController.deleteStaff);
+app.delete('/data/settings/subscription', settingsController.cancelSubscription);
 
 // Category management routes
 app.get('/data/settings/categories', settingsController.getCategories);
 app.post('/data/settings/categories', settingsController.createCategory);
 app.put('/data/settings/categories/:categoryId', settingsController.updateCategory);
 app.delete('/data/settings/categories/:categoryId', settingsController.deleteCategory);
+
+app.get('/data/dashboard', getDashboardData);
 
 initializeSnapshotJob();
 

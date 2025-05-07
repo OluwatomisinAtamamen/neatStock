@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { BsBoxSeam, BsRulers, BsLightbulb, BsCurrencyPound } from 'react-icons/bs';
 
 function LandingPage() {
   return (
@@ -29,13 +30,13 @@ function LandingPage() {
             <div className="text-center">
               <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
                 <span className="block">Simplify Your Store&apos;s Inventory</span>
-                <span className="block mt-2 text-primary">Know What You Have, Exactly Where It Is</span>
+                <span className="block mt-2 text-primary">Know What You Have, Where It Is</span>
               </h1>
               <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-600">
-                Empower your retail store with seamless EPOS integration. Automatically update stock levels when sales occur—no more manual counting.
+                Inventory management designed specifically for African grocery stores and small businesses. Stop wasting space and money on overstocking.
               </p>
               <p className="mt-2 max-w-2xl mx-auto text-lg text-gray-600">
-                Designed for small business owners: Fast, reliable, and easy to use. Tailored for African retail spaces.
+                Organize your products efficiently with our simple space management system, designed for business owners like you.
               </p>
               <div className="mt-10 max-w-md mx-auto sm:flex sm:justify-center md:mt-12">
                 <div className="rounded-md shadow">
@@ -58,43 +59,51 @@ function LandingPage() {
       <div className="bg-white py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-extrabold text-center text-gray-900">
-            Smart Inventory Management for Small Businesses
+            Inventory Management Made Simple for Small Businesses
           </h2>
           <div className="mt-12 grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             <div className="bg-gray-50 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-primary text-2xl mb-4">📊</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Eliminate Guesswork</h3>
-              <p className="text-gray-600">Accurate, real-time inventory tracking</p>
+              <div className="text-primary text-2xl mb-4">
+                <BsBoxSeam />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Stop Overstocking</h3>
+              <p className="text-gray-600">Know exactly what you have and avoid buying products you already have in stock</p>
             </div>
             <div className="bg-gray-50 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-primary text-2xl mb-4">⏱️</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Save Time</h3>
-              <p className="text-gray-600">Automate stock updates from your EPOS system</p>
+              <div className="text-primary text-2xl mb-4">
+                <BsRulers />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Maximize Your Space</h3>
+              <p className="text-gray-600">Track space utilization with our simple Relative Space Units system</p>
             </div>
             <div className="bg-gray-50 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-primary text-2xl mb-4">🗺️</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Organize Your Space</h3>
-              <p className="text-gray-600">Visual mapping and intuitive location tagging</p>
+              <div className="text-primary text-2xl mb-4">
+                <BsLightbulb />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Easy Weekly Stock Counts</h3>
+              <p className="text-gray-600">Update your inventory with our simple stocktake system each weekend</p>
             </div>
             <div className="bg-gray-50 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-primary text-2xl mb-4">💰</div>
+              <div className="text-primary text-2xl mb-4">
+                <BsCurrencyPound />
+              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Affordable Solution</h3>
-              <p className="text-gray-600">Built with simplicity and affordability in mind</p>
+              <p className="text-gray-600">Just £12 per month, a fraction of what other systems charge</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* EPOS Integration Section */}
+      {/* RSU System Section */}
       <div className="bg-gray-50 py-16 sm:py-24" id="how-it-works">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
             <div>
               <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-                Seamless EPOS Integration
+                Our Unique Space Management System
               </h2>
               <p className="mt-3 max-w-3xl text-lg text-gray-600">
-                Connect your point-of-sale system directly to your inventory management. When a sale happens, your stock levels update automatically.
+                Track your inventory space with our intuitive Relative Space Units (RSU) system. No complex measurements or calculations needed.
               </p>
               <div className="mt-8 space-y-4">
                 <div className="flex items-start">
@@ -104,7 +113,7 @@ function LandingPage() {
                     </svg>
                   </div>
                   <p className="ml-3 text-base text-gray-600">
-                    Real-time synchronization between sales and inventory
+                    Choose a standard product as your reference (1 RSU)
                   </p>
                 </div>
                 <div className="flex items-start">
@@ -114,7 +123,7 @@ function LandingPage() {
                     </svg>
                   </div>
                   <p className="ml-3 text-base text-gray-600">
-                    Automatic low-stock alerts based on your defined thresholds
+                    Define location capacities in RSU (how many standard items fit)
                   </p>
                 </div>
                 <div className="flex items-start">
@@ -124,7 +133,17 @@ function LandingPage() {
                     </svg>
                   </div>
                   <p className="ml-3 text-base text-gray-600">
-                    Works with popular EPOS systems used in African markets
+                    Assign RSU values to products based on relative size
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="ml-3 text-base text-gray-600">
+                    Get alerts when locations are getting full
                   </p>
                 </div>
               </div>
@@ -134,23 +153,33 @@ function LandingPage() {
                 <div className="px-6 py-8 bg-gradient-to-br from-primary/10 to-blue-100/30">
                   <div className="text-center mb-8">
                     <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-primary">
-                      Automated
+                      Space Management
                     </span>
                   </div>
                   <div className="border border-gray-200 rounded-lg bg-white p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-gray-500">Sale completed</span>
-                      <span className="text-green-500 text-sm">✓ Just now</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded mb-4"></div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-gray-500">Inventory updated</span>
-                      <span className="text-green-500 text-sm">✓ Just now</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded mb-4"></div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Reports refreshed</span>
-                      <span className="text-green-500 text-sm">✓ Just now</span>
+                    <h3 className="font-medium mb-4">Example RSU Values</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-6 h-6 bg-blue-100 rounded mr-3"></div>
+                          <span>Standard Can (1 RSU)</span>
+                        </div>
+                        <span>1 unit</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-blue-100 rounded mr-3"></div>
+                          <span>Rice Bag (3 RSU)</span>
+                        </div>
+                        <span>3 units</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-blue-100 rounded mr-3"></div>
+                          <span>Large Box (5 RSU)</span>
+                        </div>
+                        <span>5 units</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -160,20 +189,133 @@ function LandingPage() {
         </div>
       </div>
 
-      {/* Testimonial-like Trust Section */}
+      {/* Pricing Comparison Section */}
       <div className="bg-white py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900">Trusted by small retailers across the UK and Africa</h2>
+            <h2 className="text-3xl font-extrabold text-gray-900">Affordable Inventory Management</h2>
             <p className="mt-4 text-lg text-gray-600">
-              Tailored for your store – Customizable layouts that work with your space
+              NeatStock is designed specifically for small retail businesses like yours
             </p>
           </div>
           
-          <div className="mt-12 border-t border-gray-200 pt-12">
-            <p className="text-center text-base text-gray-600">
-              Secure and straightforward: Designed with your business in mind
+          <div className="mt-12 grid gap-8 lg:gap-12 grid-cols-1 md:grid-cols-2">
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span className="bg-primary text-white text-sm font-bold px-4 py-1 rounded-full">
+                  Our Solution
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold text-center mb-6">NeatStock</h3>
+              <div className="text-center text-3xl font-bold text-primary mb-6">£12<span className="text-base text-gray-500 font-normal">/month</span></div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start">
+                  <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Space management with RSU system</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Weekly stocktake system</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Low stock alerts</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Simple setup with one-time assistance</span>
+                </li>
+              </ul>
+              <div className="text-center">
+                <Link to="/signup" className="inline-block bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                  Get Started
+                </Link>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-8">
+              <h3 className="text-2xl font-bold text-center mb-6">Competitors</h3>
+              <div className="text-center text-3xl font-bold text-gray-700 mb-6">£49-149<span className="text-base text-gray-500 font-normal">/month</span></div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start">
+                  <svg className="h-6 w-6 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="text-gray-500">Complicated features you don`t need</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="h-6 w-6 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="text-gray-500">High learning curve</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="h-6 w-6 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="text-gray-500">Not designed for small African grocery stores</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="h-6 w-6 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="text-gray-500">4-12× more expensive than NeatStock</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Why We Created NeatStock Section */}
+      <div className="bg-gray-50 py-16 sm:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-extrabold text-gray-900">Why We Created NeatStock</h2>
+            <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+              We saw a specific problem affecting small African grocery stores that no existing solution was addressing
             </p>
+          </div>
+          
+          <div className="mt-12 bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-6 sm:p-10">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">The Problem</h3>
+                  <p className="mt-2 text-gray-600">
+                    African grocery stores in the UK often operate in limited spaces with hundreds of unique products. 
+                    Our research showed that owners frequently overstocked items because they lacked a clear system to 
+                    track what they already had and where it was stored.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Existing Solutions Were Not Suitable</h3>
+                  <p className="mt-2 text-gray-600">
+                    Other inventory systems were either too expensive, too complex, or not designed 
+                    for the specific needs of small African grocery stores. They required technical knowledge, 
+                    extensive training, or were priced for much larger businesses.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Our Approach</h3>
+                  <p className="mt-2 text-gray-600">
+                    We designed NeatStock from the ground up for these specific businesses. We focused on 
+                    space management, simplicity, and affordability. The result is a system that helps you 
+                    know exactly what you have, where it is, and when you`re running low—without breaking the bank.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -182,8 +324,8 @@ function LandingPage() {
       <div className="bg-primary">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            <span className="block">Ready to get started?</span>
-            <span className="block text-blue-100">Create your account today.</span>
+            <span className="block">Ready to organize your inventory?</span>
+            <span className="block text-blue-100">Get started today for just £12/month.</span>
           </h2>
           <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
             <div className="inline-flex rounded-md shadow">

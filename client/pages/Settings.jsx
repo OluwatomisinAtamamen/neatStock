@@ -253,11 +253,17 @@ function Settings() {
     }
   };
 
-  // Subscription management
-  const handleCancelSubscription = () => {
-    if (window.confirm('Are you sure you want to cancel your subscription? This action cannot be undone and you will lose access to your account.')) {
-
-      showToast('This feature is not available yet', 'info');
+  const handleCancelSubscription = async () => {
+    if (window.confirm('Are you sure you want to cancel your subscription? This will permanently delete ALL your business data and cannot be undone.')) {
+      try {
+        setLoading(true);
+        await axios.delete('/data/settings/subscription');
+        navigate('/');
+      } catch (error) {
+        console.error('Error cancelling subscription:', error);
+        showToast(error.response?.data?.message || 'Failed to cancel subscription', 'error');
+        setLoading(false);
+      }
     }
   };
 

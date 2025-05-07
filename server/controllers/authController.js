@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
-import * as db from '../dbConnection.js';
+import { pool, getUser, createUser, getBusinessByEmail } from '../dbConnection.js';
 import { validateSignupInput, validateLoginInput } from '../validateInput.js';
 
 dotenv.config();
@@ -23,10 +23,12 @@ export async function signup(req, res) {
 
   try {
     const { firstName, lastName, businessName, businessEmail, username} = req.body;
-    const existingUser = await db.getUser(username);
-    if (existingUser) {
-      return res.status(400).json({ message: 'Username already in use' });
+    const existingUser = await getUser(username);
+    const existingBusiness = await getBusinessByEmail(businessEmail);
+    if (existingUser || existingBusiness) {
+      return res.status(400).json({ message: 'Username or Email already in use' });
     }
+  
 
     // Store signup info in session (not DB yet)
     req.session.pendingSignup = {
@@ -79,7 +81,7 @@ export async function login(req, res) {
   
   try {
     const { username, password } = req.body;
-    const user = await db.getUser(username);
+    const user = await getUser(username);
     if (!user) {
       return res.status(401).json({ message: 'Invalid username or password' });
     }
@@ -180,7 +182,7 @@ export async function handlePaymentSuccess(req, res) {
     
     // Get username to check if user already exists
     const { username } = session.metadata;
-    const existingUser = await db.getUser(username);
+    const existingUser = await getUser(username);
 
     return res.json({
       success: true,
@@ -265,17 +267,18 @@ export async function completeSignup(req, res) {
     } = session.metadata;
     
     // Check if user already exists
-    const existingUser = await db.getUser(username);
+    const existingUser = await getUser(username);
     if (existingUser) {
       return res.status(400).json({ 
         success: false, 
         message: 'User already exists'
       });
     }
+
     
     // Create user with provided password
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.createUser(
+    await createUser(
       businessEmail, 
       username, 
       hashedPassword, 

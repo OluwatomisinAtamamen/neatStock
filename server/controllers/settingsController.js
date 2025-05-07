@@ -475,3 +475,70 @@ export async function deleteCategory(req, res) {
     res.status(500).json({ message: 'Error deleting category', error: error.message });
   }
 }
+
+// ...existing code...
+
+// Cancel subscription and delete all business data
+// Cancel subscription and anonymize business data
+export async function cancelSubscription(req, res) {
+  const client = await pool.connect();
+  
+  try {
+    const businessId = req.session.businessId;
+    if (!businessId) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    // Check if user is admin
+    if (!req.session.isAdmin) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Start transaction
+    await client.query('BEGIN');
+
+    // Get current business name for logging purposes
+    const businessData = await client.query(
+      'SELECT business_name FROM business WHERE business_id = $1',
+      [businessId]
+    );
+    
+    const oldBusinessName = businessData.rows[0]?.business_name;
+    
+    // Step 1: Delete all users associated with the business
+    await client.query('DELETE FROM app_user WHERE business_id = $1', [businessId]);
+    
+    // Step 2: Anonymize the business data but keep the records
+    await client.query(`
+      UPDATE business 
+      SET business_name = 'Anonymous Business', 
+          business_email = 'anonymous_' || business_id || '@example.com',
+          add1 = NULL,
+          add2 = NULL, 
+          city = NULL,
+          postcode = NULL,
+          country = NULL
+      WHERE business_id = $1
+    `, [businessId]);
+    
+    // Log the cancellation for admin tracking
+    console.log(`Business "${oldBusinessName}" (ID: ${businessId}) cancelled subscription and was anonymized`);
+    
+    // Commit transaction
+    await client.query('COMMIT');
+    
+    // Clear session
+    req.session.destroy();
+    
+    res.json({ 
+      message: 'Subscription cancelled successfully. Your account has been deactivated.' 
+    });
+  } catch (error) {
+    // Rollback in case of error
+    await client.query('ROLLBACK');
+    console.error('Error cancelling subscription:', error);
+    res.status(500).json({ message: 'Error cancelling subscription', error: error.message });
+  } finally {
+    client.release();
+  }
+}

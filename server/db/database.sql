@@ -486,3 +486,136 @@ VALUES
         (SELECT location_id FROM locations WHERE location_name = 'Main Warehouse'),
         20
     );
+
+
+
+-- Begin transaction for inserting snapshots
+BEGIN;
+
+-- Get the business ID for reference
+DO $$
+DECLARE
+    business_id_val UUID;
+BEGIN
+    SELECT business_id INTO business_id_val FROM business WHERE business_name = 'African Foods Ltd';
+
+    -- Insert three snapshots (two weekly and one manual)
+    -- The snapshots go back in time by 14 days, 7 days, and a recent manual one
+    INSERT INTO inventory_snapshot (business_id, snapshot_date, snapshot_type, description)
+    VALUES
+        (business_id_val, NOW() - INTERVAL '14 days', 'weekly', 'End of month stocktake'),
+        (business_id_val, NOW() - INTERVAL '7 days', 'weekly', 'Weekly routine stocktake'),
+        (business_id_val, NOW() - INTERVAL '1 day', 'manual', 'Manual stocktake before reordering');
+END $$;
+
+-- Now insert snapshot items and locations for each snapshot
+DO $$
+DECLARE
+    business_id_val UUID;
+    first_snapshot_id INTEGER;
+    second_snapshot_id INTEGER;
+    third_snapshot_id INTEGER;
+    item_record RECORD;
+    location_record RECORD;
+BEGIN
+    -- Get the business ID
+    SELECT business_id INTO business_id_val FROM business WHERE business_name = 'African Foods Ltd';
+    
+    -- Get snapshot IDs
+    SELECT snapshot_id INTO first_snapshot_id FROM inventory_snapshot 
+    WHERE business_id = business_id_val ORDER BY snapshot_date ASC LIMIT 1;
+    
+    SELECT snapshot_id INTO second_snapshot_id FROM inventory_snapshot 
+    WHERE business_id = business_id_val ORDER BY snapshot_date ASC LIMIT 1 OFFSET 1;
+    
+    SELECT snapshot_id INTO third_snapshot_id FROM inventory_snapshot 
+    WHERE business_id = business_id_val ORDER BY snapshot_date ASC LIMIT 1 OFFSET 2;
+
+    -- FIRST SNAPSHOT (14 days ago - lower inventory levels)
+    -- Insert item snapshot data
+    FOR item_record IN 
+        SELECT item_id, quantity_in_stock FROM business_item WHERE business_id = business_id_val 
+    LOOP
+        -- First snapshot with ~30% less inventory (earlier in month)
+        INSERT INTO inventory_snapshot_item (snapshot_id, item_id, quantity_in_stock)
+        VALUES (
+            first_snapshot_id,
+            item_record.item_id,
+            GREATEST(0, FLOOR(item_record.quantity_in_stock * 0.7))::INTEGER
+        );
+    END LOOP;
+    
+    -- Insert location snapshot data
+    FOR location_record IN 
+        SELECT location_id, capacity_rsu, current_rsu_usage FROM location WHERE business_id = business_id_val 
+    LOOP
+        -- First snapshot with ~30% less space used
+        INSERT INTO inventory_snapshot_location (snapshot_id, location_id, used_space, capacity_rsu)
+        VALUES (
+            first_snapshot_id,
+            location_record.location_id,
+            GREATEST(0, FLOOR(location_record.current_rsu_usage * 0.7))::DECIMAL(10,2),
+            location_record.capacity_rsu
+        );
+    END LOOP;
+
+    -- SECOND SNAPSHOT (7 days ago - inventory increased after stock received)
+    -- Insert item snapshot data
+    FOR item_record IN 
+        SELECT item_id, quantity_in_stock FROM business_item WHERE business_id = business_id_val 
+    LOOP
+        -- Second snapshot with ~15% more inventory than current (stock received)
+        INSERT INTO inventory_snapshot_item (snapshot_id, item_id, quantity_in_stock)
+        VALUES (
+            second_snapshot_id,
+            item_record.item_id,
+            FLOOR(item_record.quantity_in_stock * 1.15)::INTEGER
+        );
+    END LOOP;
+    
+    -- Insert location snapshot data
+    FOR location_record IN 
+        SELECT location_id, capacity_rsu, current_rsu_usage FROM location WHERE business_id = business_id_val 
+    LOOP
+        -- Second snapshot with ~15% more space used
+        INSERT INTO inventory_snapshot_location (snapshot_id, location_id, used_space, capacity_rsu)
+        VALUES (
+            second_snapshot_id,
+            location_record.location_id,
+            FLOOR(location_record.current_rsu_usage * 1.15)::DECIMAL(10,2),
+            location_record.capacity_rsu
+        );
+    END LOOP;
+
+    -- THIRD SNAPSHOT (1 day ago - close to current state but slight variations)
+    -- Insert item snapshot data
+    FOR item_record IN 
+        SELECT item_id, quantity_in_stock FROM business_item WHERE business_id = business_id_val 
+    LOOP
+        -- Third snapshot with slight variations from current inventory
+        INSERT INTO inventory_snapshot_item (snapshot_id, item_id, quantity_in_stock)
+        VALUES (
+            third_snapshot_id,
+            item_record.item_id,
+            FLOOR(item_record.quantity_in_stock * (0.9 + random() * 0.2))::INTEGER
+        );
+    END LOOP;
+    
+    -- Insert location snapshot data
+    FOR location_record IN 
+        SELECT location_id, capacity_rsu, current_rsu_usage FROM location WHERE business_id = business_id_val 
+    LOOP
+        -- Third snapshot with slight variations from current space usage
+        INSERT INTO inventory_snapshot_location (snapshot_id, location_id, used_space, capacity_rsu)
+        VALUES (
+            third_snapshot_id,
+            location_record.location_id,
+            FLOOR(location_record.current_rsu_usage * (0.9 + random() * 0.2))::DECIMAL(10,2),
+            location_record.capacity_rsu
+        );
+    END LOOP;
+    
+END $$;
+
+-- Commit all snapshot data
+COMMIT;

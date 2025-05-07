@@ -60,3 +60,19 @@ export async function getUser(username) {
     throw error;
   }
 }
+
+// function to check if business email already exists
+export async function getBusinessByEmail(email) {
+  try {
+    const result = await pool.query(
+      `SELECT business_id, business_name
+       FROM business
+       WHERE business_email = $1`,
+      [email.trim()] // trim to avoid whitespace issues
+    );
+    return result.rows[0]; // returns undefined if no business found
+  } catch (error) {
+    console.error('Error checking business email:', error);
+    throw error;
+  }
+}

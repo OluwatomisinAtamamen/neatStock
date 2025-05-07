@@ -1,20 +1,34 @@
 import PropTypes from 'prop-types';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
 import {
-  BsGrid1X2Fill, 
-  BsSearch, 
-  BsGearFill, 
+  BsGrid1X2Fill,
+  BsBoxArrowRight,
   BsJournalText,
   BsMap,
-  BsFileEarmarkText
+  BsSearch,
+  BsFileEarmarkText,
+  BsGearFill,
 } from 'react-icons/bs';
 import { IoMdClose } from 'react-icons/io';
+import { AuthContext } from '../context/auth';
 
 function Sidebar({openSidebarToggle, OpenSidebar}) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useContext(AuthContext);
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
   
   return (
-    <aside className={`fixed left-0 top-0 h-screen overflow-y-auto w-64 bg-card shadow-lg z-30 transition-all duration-300 ease-in-out transform ${openSidebarToggle ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:shadow-none lg:w-60`}>
+    <aside className={`fixed left-0 top-0 h-screen overflow-y-auto w-64 bg-card shadow-lg z-30 transition-all duration-300 ease-in-out transform ${openSidebarToggle ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:shadow-none lg:w-60 flex flex-col`}>
       <div className="flex items-center gap-2 text-primary font-bold text-xl mb-8 px-4 pt-4">
         <span>NeatStock</span>
         <button 
@@ -26,7 +40,7 @@ function Sidebar({openSidebarToggle, OpenSidebar}) {
         </button>
       </div>
       
-      <ul className="space-y-2 px-2 pb-8">
+      <ul className="space-y-2 px-2 pb-8 flex-grow">
         {/* Dashboard - Overview */}
         <li>
           <Link 
@@ -105,6 +119,16 @@ function Sidebar({openSidebarToggle, OpenSidebar}) {
           </Link>
         </li>
       </ul>
+      
+      {/* Logout button - added at the bottom */}
+      <div className="px-2 pb-6 mt-auto">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 p-3 rounded-md transition-colors duration-200 text-red-600 hover:bg-red-50"
+        >
+          <BsBoxArrowRight /> Logout
+        </button>
+      </div>
     </aside>
   );
 }
