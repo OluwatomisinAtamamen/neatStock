@@ -92,6 +92,34 @@ CREATE TABLE sessions (
   expire TIMESTAMP NOT NULL
 );
 
+-- Add tables to track historical inventory state
+
+-- Main snapshots table
+CREATE TABLE inventory_snapshot (
+  snapshot_id SERIAL PRIMARY KEY,
+  business_id UUID NOT NULL REFERENCES business(business_id),
+  snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  snapshot_type VARCHAR(50) NOT NULL,
+  description VARCHAR(255)
+);
+
+-- Item quantities at snapshot time
+CREATE TABLE inventory_snapshot_item (
+  snapshot_id INTEGER REFERENCES inventory_snapshot(snapshot_id) ON DELETE CASCADE,
+  item_id UUID NOT NULL REFERENCES business_item(item_id),
+  quantity_in_stock INTEGER NOT NULL,
+  PRIMARY KEY (snapshot_id, item_id)
+);
+
+-- Location usage at snapshot time
+CREATE TABLE inventory_snapshot_location (
+  snapshot_id INTEGER REFERENCES inventory_snapshot(snapshot_id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES location(location_id),
+  used_space DECIMAL(10,2) NOT NULL,
+  capacity_rsu DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (snapshot_id, location_id)
+);
+
 -- Create trigger function to update location Relative Space Unit(RSU) usage
 CREATE OR REPLACE FUNCTION update_location_rsu_usage()
 RETURNS TRIGGER AS $$

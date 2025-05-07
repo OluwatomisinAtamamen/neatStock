@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { BsChevronDown, BsChevronUp } from 'react-icons/bs';
+import { BsChevronDown, BsChevronUp, BsCalendar, BsDownload } from 'react-icons/bs';
 
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
@@ -14,21 +14,46 @@ function Reports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const reportRef = useRef(null);
 
-  // Fetch data when component mounts
+  //state for snapshots
+  const [selectedSnapshot, setSelectedSnapshot] = useState(null);
+  const [availableSnapshots, setAvailableSnapshots] = useState([]);
+  const [isViewingSnapshot, setIsViewingSnapshot] = useState(false);
+
+   // Fetch available snapshots
+   useEffect(() => {
+    const fetchSnapshots = async () => {
+      try {
+        const response = await axios.get('/data/reports/snapshots');
+        setAvailableSnapshots(response.data);
+      } catch (err) {
+        console.error('Error fetching snapshots:', err);
+      }
+    };
+    
+    fetchSnapshots();
+  }, []);
+
+  // Fetch report data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
 
+        // Build request params to include snapshot if selected
+        const params = selectedSnapshot ? { snapshotId: selectedSnapshot } : {};
+
         if (activeTab === 'lowStock') {
-          const response = await axios.get('/data/reports/low-stock');
+          const response = await axios.get('/data/reports/low-stock', { params });
           setLowStockData(response.data);
         } else {
-          const response = await axios.get('/data/reports/space-utilisation');
+          const response = await axios.get('/data/reports/space-utilisation', { params });
           setSpaceUtilisationData(response.data);
         }
+        
+        setIsViewingSnapshot(!!selectedSnapshot);
       } catch (err) {
         console.error(`Error fetching ${activeTab} data:`, err);
         setError(`Failed to load report data. ${err.response?.data?.message || err.message}`);
@@ -38,7 +63,7 @@ function Reports() {
     };
 
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, selectedSnapshot]);
 
   // Handle sorting
   const requestSort = (key) => {
@@ -206,12 +231,129 @@ function Reports() {
     }
   };
 
+  const handleExportToPDF = async () => {
+    if (!reportRef.current) return;
+    
+    try {
+      // Dynamically import html2pdf to reduce initial load time
+      const html2pdf = (await import('html2pdf.js')).default;
+      
+      const reportTitle = activeTab === 'lowStock' ? 'Low Stock Report' : 'Space Utilisation Report';
+      
+      let dateInfo = `Generated on ${new Date().toLocaleDateString()}`;
+      if (isViewingSnapshot) {
+        const snapshotInfo = activeTab === 'lowStock' 
+          ? lowStockData?.snapshot_info 
+          : spaceUtilisationData?.snapshot_info;
+          
+        if (snapshotInfo && snapshotInfo.snapshot_date) {
+          dateInfo = `Snapshot from ${new Date(snapshotInfo.snapshot_date).toLocaleDateString()}`;
+        }
+      }
+      
+      // Get all canvas elements in the report
+      const canvases = reportRef.current.querySelectorAll('canvas');
+      
+      // Convert each canvas to an image data URL
+      const canvasPromises = Array.from(canvases).map(canvas => {
+        return new Promise(resolve => {
+          const image = new Image();
+          image.src = canvas.toDataURL('image/png', 1.0);
+          image.style.width = '100%';
+          image.style.maxHeight = '300px';
+          image.style.objectFit = 'contain';
+          canvas.parentNode.appendChild(image);
+          canvas.style.display = 'none';
+          resolve();
+        });
+      });
+      
+      // Wait for all canvas elements to be converted
+      await Promise.all(canvasPromises);
+      
+      const opt = {
+        margin: 10,
+        filename: `${reportTitle} - ${dateInfo}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          logging: true
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+  
+      // Create clone of the report content to avoid modifying the DOM
+      const element = reportRef.current.cloneNode(true);
+  
+      // Add a header to the PDF
+      const header = document.createElement('div');
+      header.innerHTML = `
+        <h2 style="color: #2563EB; margin-bottom: 5px; font-size: 24px;">${reportTitle}</h2>
+        <p style="color: #6B7280; margin-bottom: 15px;">${dateInfo}</p>
+        <hr style="margin-bottom: 20px;">
+      `;
+      element.prepend(header);
+  
+      await html2pdf().set(opt).from(element).save();
+      
+      // Restore the original state (remove images and show canvases again)
+      canvases.forEach(canvas => {
+        const parentNode = canvas.parentNode;
+        const image = parentNode.querySelector('img');
+        if (image) parentNode.removeChild(image);
+        canvas.style.display = '';
+      });
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
   return (
     <section className="p-6">
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold">Reports</h1>
-        {/* Future enhancement: Add date range selector and export options here */}
+        
+        {/* Snapshot selector */}
+        <div className="flex items-center">
+          <button 
+            onClick={handleExportToPDF}
+            className="flex items-center gap-2 text-white bg-primary hover:bg-blue-700 px-4 py-2 rounded"
+            disabled={loading}
+          >
+            <BsDownload />
+            Export PDF
+          </button>
+          <div className="mr-4">
+            <select
+              className="border rounded-md px-3 py-2 bg-white"
+              value={selectedSnapshot || ''}
+              onChange={(e) => setSelectedSnapshot(e.target.value || null)}
+            >
+              <option value="">Current Data (Live)</option>
+              {availableSnapshots.map(snapshot => (
+                <option key={snapshot.snapshot_id} value={snapshot.snapshot_id}>
+                  {new Date(snapshot.snapshot_date).toLocaleDateString()} - {snapshot.snapshot_type}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
+
+      {/* Show snapshot indicator if viewing historical data */}
+      {isViewingSnapshot && lowStockData?.snapshot_info && (
+        <div className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-200 flex items-center text-blue-800">
+          <BsCalendar className="mr-2" />
+          <span>
+            Viewing snapshot from {new Date(lowStockData.snapshot_info.snapshot_date).toLocaleDateString()} 
+            ({lowStockData.snapshot_info.snapshot_type})
+            {lowStockData.snapshot_info.description && ` - ${lowStockData.snapshot_info.description}`}
+          </span>
+        </div>
+      )}
       
       {/* Tab Navigation */}
       <div className="mb-6 border-b">
@@ -240,7 +382,7 @@ function Reports() {
           <p>{error}</p>
         </div>
       ) : (
-        <>
+        <div ref={reportRef}>
           {/* Low Stock View */}
           {activeTab === 'lowStock' && lowStockData && (
             <div>
@@ -434,17 +576,7 @@ function Reports() {
                               : <BsChevronDown className="inline ml-1" />
                           )}
                         </th>
-                        <th 
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                          onClick={() => requestSort('utilisation_percentage')}
-                        >
-                          utilisation
-                          {sortConfig.key === 'utilisation_percentage' && (
-                            sortConfig.direction === 'asc' 
-                              ? <BsChevronUp className="inline ml-1" />
-                              : <BsChevronDown className="inline ml-1" />
-                          )}
-                        </th>
+                        
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
@@ -462,23 +594,7 @@ function Reports() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             {parseFloat(location.used_space).toFixed(1)} RSU
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <span className="mr-2">{location.utilisation_percentage}%</span>
-                              <div className="w-24 bg-gray-200 rounded-full h-2.5">
-                                <div 
-                                  className={`h-2.5 rounded-full ${
-                                    location.utilisation_percentage >= 90 
-                                      ? 'bg-red-600' 
-                                      : location.utilisation_percentage >= 75 
-                                        ? 'bg-yellow-500' 
-                                        : 'bg-green-600'
-                                  }`}
-                                  style={{ width: `${Math.min(location.utilisation_percentage, 100)}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                          </td>
+    
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColorClass(location.utilisation_status)}`}>
                               {formatStatusLabel(location.utilisation_status)}
@@ -492,7 +608,7 @@ function Reports() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
     </section>
   );

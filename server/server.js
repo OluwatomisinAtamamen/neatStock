@@ -14,6 +14,7 @@ import searchRoutes from './routes/search.js';
 import inventoryRoutes from './routes/inventory.js';
 import * as settingsController from './controllers/settingsController.js';
 import reportsRoutes from './routes/reports.js';
+import { initializeSnapshotJob } from './snapshotJob.js';
 
 // Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -84,5 +85,7 @@ app.get('/data/settings/categories', settingsController.getCategories);
 app.post('/data/settings/categories', settingsController.createCategory);
 app.put('/data/settings/categories/:categoryId', settingsController.updateCategory);
 app.delete('/data/settings/categories/:categoryId', settingsController.deleteCategory);
+
+initializeSnapshotJob();
 
 app.listen(8080);
