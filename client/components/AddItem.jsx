@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { BsSearch, BsPlusLg, BsTrash } from 'react-icons/bs';
+import { BsSearch, BsPlusLg, BsTrash, BsExclamationTriangle } from 'react-icons/bs';
+import { Link } from "react-router-dom";
 
 function AddItem({ onComplete}) {
   // Main state for multiple items
@@ -15,6 +16,8 @@ function AddItem({ onComplete}) {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const [showLocationNotice, setShowLocationNotice] = useState(false);
   
   // Catalog search
   const [searchResults, setSearchResults] = useState({});
@@ -199,6 +202,14 @@ function AddItem({ onComplete}) {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if there are no locations or if any items are missing a location
+    if (locations.length === 0 || items.some(item => !item.locationId)) {
+      setShowLocationNotice(true);
+      return;
+    }
+    
+    setShowLocationNotice(false);
     setLoading(true);
     
     try {
@@ -252,6 +263,21 @@ function AddItem({ onComplete}) {
         <div className="p-2 bg-green-100 text-green-700 rounded">
           All items added successfully!
         </div>
+      )}
+
+      {showLocationNotice && (
+              <div className="p-2 bg-yellow-50 border border-yellow-100 rounded flex items-center gap-2">
+                <div className="bg-yellow-400 text-white p-1 rounded">
+                  <BsExclamationTriangle />
+                </div>
+                <div>
+                  {locations.length === 0 ? (
+                    <span>You need to create a location first. <Link to="/locations" className="text-blue-600 font-medium">Go to Locations tab</Link></span>
+                  ) : (
+                    <span>Please select a location for all items.</span>
+                  )}
+                </div>
+              </div>
       )}
       
       {items.map((item, index) => (
@@ -383,7 +409,6 @@ function AddItem({ onComplete}) {
                 className="w-full p-2 border rounded"
                 value={item.locationId}
                 onChange={(e) => handleChange(index, 'locationId', e.target.value)}
-                required
                 disabled={loading}
               >
                 <option value="">Select Location</option>

@@ -32,7 +32,7 @@ function Sidebar({openSidebarToggle, OpenSidebar}) {
       <div className="flex items-center gap-2 text-primary font-bold text-xl mb-8 px-4 pt-4">
         <span>NeatStock</span>
         <button 
-          className="ml-auto text-text hover:text-primary lg:hidden" 
+          className="ml-auto text-text hover:text-primary lg:hidden"
           onClick={OpenSidebar}
           aria-label="Close sidebar"
         >
