@@ -1,61 +1,52 @@
-2 Literature Review 
-Introduction
+NeatStock - Inventory Management System
+NeatStock is an inventory management solution designed specifically for small businesses with space constraints, particularly African grocery stores in the UK. The system focuses on efficient space utilization tracking alongside traditional inventory management.
 
-Inventory management involves tracking and regulating stock levels to ensure timely replenishment and meet customer demand. Maintaining the right amount of inventory is critical, as excess stock ties up capital and weakens cash flow, while insufficient stock results in stockouts and lost sales opportunities. Effective inventory control aims to strike a balance: minimizing holding costs while maximizing availability (Priniotakis & Argyropoulos, 2018). This is very important for small and medium enterprise (SME) businesses because they have smaller capital (Longitudinal Small Business Survey: SME Employers (Businesses with 1 to 249 Employees) – UK, 2023).
+Features
+Inventory tracking with space utilization metrics
+Staff management
+Business profile management
+Category management
+Location tracking
+Reporting tools
+Subscription-based access
+Tech Stack
+Frontend: React with Vite, TailwindCSS
+Backend: Node.js, Express
+Database: PostgreSQL
+Authentication: Express sessions
+Payment Processing: Stripe
 
-Search Strategy
-My literature search strategy encompassed multiple academic databases and resources to ensure comprehensive coverage of inventory management challenges facing SMEs, with particular focus on African-owned grocery stores in the UK. I primarily utilized Google Scholar, Mendeley, and JSTOR to access peer-reviewed academic journals and research papers, as these resources undergo rigorous evaluation by experts in the field, providing more reliable and accurate information (Elmhurst University, 2020) (reference). Additionally, I consulted UK government websites including the Department for Business and Trade to gather statistical data on SME numbers and economic contributions.
+Environment Setup
+Clone the repository:
+git clone <repository-url>
+cd neatStock
 
-Beyond academic literature, I conducted an artefact review of existing inventory management applications, evaluating their features, pricing models, and suitability for the specific needs of space-constrained African grocery stores.
+Create a .env file in the root directory with these variables:
+# Database configuration
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_HOST=your_db_host
+DB_PORT=5432
+DB_DATABASE=neatstock_db
 
-Inventory Management Challenges for SMEs
-SMEs face many well-documented inventory problems. SMEs, characterized as small businesses, typically with fewer than 10 employees, frequently lack the capital to invest in sophisticated systems, and they have limited staff skilled in inventory analytics ​(Longitudinal Small Business Survey: SME Employers (Businesses with 1 to 249 Employees) – UK, 2023).  These constraints mean many small grocers rely on manual stockbooks or simple spreadsheets, making errors hard to detect and rectify. For example, one industry source notes that overstocking leads to waste and under-stocking leads to lost sales and customer dissatisfaction​(reference)
+# Session configuration
+SESSION_SECRET=your_session_secret
 
-In the context of African-owned grocery shops in the UK, these general SME limitations are compounded by additional pressures. Such stores must serve niche community needs while operating on tight budgets(reference). Many immigrant grocers stock specialty perishables (e.g. imported produce, frozen items, unique spices) not carried by mainstream chains​(reference). They typically occupy small urban storefronts, so shelf and backroom space are at a premium. In practice, managers often conduct frequent manual counts (sometimes weekly) to keep up with fast turnover of ethnic foods and to align with community shopping habits. In sum, the combination of tight capital, small physical footprint, and culturally-driven product range creates inventory challenges that standard systems do not adequately address.
+# Stripe configuration
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 
-Space Optimisation in Retail Environments
-Maximizing the use of limited retail space is a well-known challenge. In convenience and grocery contexts, efficient space utilization is tightly linked to inventory turnover and financial performance. When space is scarce, retailers must balance a sufficient product assortment against overcrowding. Poor space management can increase holding costs and stockouts, while good utilization boosts sales per square foot. (reference)
-Suboptimal shelving forces unnecessary restocking trips and may lead to dead stock blocking high-demand items. In urban African food shops, the penalty of poor space use is even more acute: rent is high, and the opportunity cost of unsold goods is substantial. Every shelf must be justified by turnover and profit (reference)
+# Server port
+PORT=8080
 
-Retailers have developed several approaches to manage space systematically. In large chains, planograms (shelf layouts) and category management ensure that each section is dimensioned and stocked to match sales data. Chains invest in precise shelf diagrams and automated space-management software. However, such sophisticated tools rarely reach the smallest retailers. Without predefined shelf layouts, small store owners arrange products by eye, often relying on experience rather than data. Other approaches involve volumetric tracking or sensor-based systems, which measure the actual volume or area occupied by products and flag replenishment needs. Some newer “smart shelf” technologies use cameras or weight sensors to estimate inventory levels. These can, in theory, optimize space usage by reporting exactly when an item is nearly out of stock or when shelf space is underfilled. But such advanced systems are usually beyond the reach of SMEs.
+Install dependencies:
+npm install
 
-In practice, small retailers must rely on more analog methods of space management. They may use adjustable shelving (modular racks) to accommodate items of different heights, and they often employ traditional first-in-first-out rotation on shelves to prevent spoilage.(reference) Retail guidance for small shops frequently emphasizes visual merchandising—using endcaps and display bins to highlight fast-moving ethnic staples. Yet there is a clear gap in tailored tools: no mainstream inventory management tool integrates intuitive spatial tracking (e.g. “how much of the produce shelf is free”) for a tiny shop layout.
+Set up the PostgreSQL database:
 
-This gap in spatial tracking tools has prompted exploration of alternative measurement approaches that balance simplicity with effectiveness. Some inventory management researchers have proposed simplified relative measurement systems that avoid the complexities of absolute dimensions. For example, Rosales et al. (2014) describe bin-based systems in healthcare settings where standardized containers, rather than individual items, become the tracking unit. Similar approaches in retail would allow store owners to conceptualize inventory in terms of relative space consumption rather than precise measurements. A Relative Space Unit (RSU) system represents a potential solution to this gap, allowing small retailers to track space utilization through intuitive comparisons to standard reference items like a common item box.
+Create a database named neatstock_db
+Run the database schema setup using database.sql in db
 
 
-Technology Adoption in SME Inventory Management
-
-Barriers to Technology Adoption
-SMEs encounter several barriers when adopting digital inventory management solutions. According to Masood and Sonntag (2020), SMEs differ significantly from large organizations and even from one another, with each facing relatively unique challenges. This heterogeneity makes standardized approaches to digital transformation less effective for smaller businesses.
-Resource limitations represent one of the most significant barriers to technology adoption. SMEs typically operate with constrained financial resources, limiting their ability to invest in comprehensive inventory management systems. Research indicates that financial barriers persist as the greatest obstacle to Industry 4.0 adoption among UK manufacturing SMEs (Masood & Sonntag, 2020). For African grocery stores in the UK specifically, these financial constraints are often more pronounced due to their niche market positioning and smaller profit margins.
-Beyond financial constraints, SMEs face human resource limitations. Many small businesses lack dedicated IT staff or employees with specialized technical knowledge required to implement and maintain digital inventory systems. This knowledge gap creates a significant barrier to adoption, as noted by multiple researchers examining digital transformation in SMEs (Masood & Sonntag, 2020).
-A lack of technology awareness also impedes adoption. Many SME owners and managers have limited exposure to emerging inventory management technologies and may not fully understand the potential benefits these systems could provide. This knowledge deficit makes it difficult for decision-makers to justify investment in new technologies, particularly when the return on investment is uncertain.
-Limited existing IT infrastructure presents another significant barrier. Many SMEs operate with minimal technological foundation, making the integration of new inventory management systems more challenging and potentially more disruptive to existing operations. The survey data from UK manufacturing SMEs indicates that company complexity significantly affects the challenges observed in technology implementation, reinforcing findings from previous literature (Masood & Sonntag, 2020).
-
-Successful Implementation Factors
-
-Low-cost digital solutions represent a critical success factor for SMEs with limited financial resources. As noted in the research, digital solutions for SMEs need to be low-cost in terms of both capital investment and operational expenses (Masood & Sonntag, 2020). For inventory management specifically, solutions that utilize affordable hardware components and open-source software can significantly reduce implementation costs while providing substantial functional benefits.
-
-Appropriate technological complexity represents a crucial success factor. Solutions that avoid "overfitting" – implementing unnecessarily complex features beyond the actual needs of the business – tend to achieve higher adoption rates. For inventory management specifically, systems that focus on core functionality (tracking stock levels, monitoring space utilization, facilitating reordering) while avoiding feature bloat demonstrate greater implementation success.
-
-Limited demand for technical capabilities also facilitates successful adoption. Systems designed with intuitive interfaces that require minimal technical expertise from users have higher adoption rates among SMEs. This is particularly relevant for African grocery stores in the UK, where staff may have varying levels of technical literacy and limited time for extensive training.
-
-These findings highlight the need for inventory management solutions specifically designed for the SME context, taking into account their unique constraints and operational needs. Generic enterprise solutions developed for larger organizations frequently fail to address these factors, explaining their limited adoption among smaller businesses despite the potential benefits they could provide.
-Existing Inventory Solutions Analysis
-This section examines current inventory management solutions available to SMEs in the UK, with particular focus on their suitability for African grocery stores with specialized inventory needs.
-
-Feature Comparison and Pricing Models
-The market offers several inventory management solutions with varying features and price points. Three of the most commonly used systems by UK SMEs are Sortly, Zoho Inventory, and inFlow.
-Sortly offers a free plan limited to 100 unique items and one user, with paid plans ranging from approximately $24–$74/month. The system provides basic inventory tracking, low stock alerts, activity history reporting, and date-based alerts. 
-
-Zoho Inventory provides a free tier that supports 50 orders per month, one user, and two locations. Their paid plans range from $29–$249/month. Zoho's features include more advanced functionality such as Inventory Aging Summary, Inventory Valuation Summary, automated reorder point calculation, and batch tracking capabilities. It also supports multiple warehouse locations and includes a Purchase Order module.
-InFlow offers a free edition with limited SKUs and paid cloud plans priced at approximately $39–$169/month. The system includes Inventory Summary reporting, a Recommended Reorder Point calculator, and inventory transaction reports. Like Zoho, it includes Purchase Order functionality and offers strong aging and reorder-calculation tools.
-
-Gaps in Existing Solutions
-A critical limitation of existing solutions is their lack of space management functionality. None of the SME inventory applications surveyed compute shelf or warehouse space usage. This gap is particularly problematic for African grocery stores operating in constrained urban spaces where optimizing physical storage is essential to business operations. While applications like Zoho Inventory support multiple warehouses/locations, they don't highlight the busiest locations by transactions.
-
-Though these systems offer free tiers, comprehensive functionality requires paid subscriptions that may strain the limited budgets of small African grocery stores. The most affordable plans typically restrict users, locations, or items, limiting their utility for businesses with diverse inventory. While Sortly, Zoho Inventory, and inFlow all offer free or low-cost tiers aimed at micro businesses, these plans often limit key functionality. For more comprehensive features, businesses must upgrade to paid plans ranging from $24-$249 per month depending on the provider and tier.
-
-Conclusion
-Having discussed the gaps in the existing solutions, my artefact aims to address this gap by providing an affordable inventory management system specifically designed for space-constrained African grocery stores, featuring relative space unit tracking, simplified interfaces, and functionality tailored to the operational realities of these businesses. By focusing on the critical need for space optimization while maintaining a low cost of entry, my artefact represents a targeted approach to solving the inventory challenges identified throughout this literature review.
+Frontend Build : npm dev
+Backend Build : npm server
