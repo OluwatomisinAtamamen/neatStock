@@ -243,7 +243,7 @@ export async function getSpaceUtilisationReport(req, res) {
         [snapshotId]
       );
       
-      // Get locations with their historical utilization data
+      // Get locations with their historical utilisation data
       const result = await pool.query(`
         SELECT 
           l.location_id,

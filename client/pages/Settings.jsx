@@ -59,7 +59,7 @@ function Settings() {
       console.error('Error loading business profile:', error);
       showToast('Failed to load business profile', 'error');
     }
-  }, []); // Empty dependency array as it only depends on stable values (axios, showToast)
+  }, []);
   
   const loadStaff = useCallback(async () => {
     try {

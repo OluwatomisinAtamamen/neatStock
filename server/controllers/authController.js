@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
-import { pool, getUser, createUser, getBusinessByEmail } from '../dbConnection.js';
+import { getUser, createUser, getBusinessByEmail } from '../dbConnection.js';
 import { validateSignupInput, validateLoginInput } from '../validateInput.js';
 
 dotenv.config();

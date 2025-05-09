@@ -202,7 +202,6 @@ export async function addStaff(req, res) {
 }
 
 // Update a staff member's admin status
-// Update a staff member's admin status
 export async function updateStaffAdmin(req, res) {
   try {
     const businessId = req.session.businessId;
