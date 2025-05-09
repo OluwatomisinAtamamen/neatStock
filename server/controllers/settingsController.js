@@ -476,9 +476,6 @@ export async function deleteCategory(req, res) {
   }
 }
 
-// ...existing code...
-
-// Cancel subscription and delete all business data
 // Cancel subscription and anonymize business data
 export async function cancelSubscription(req, res) {
   const client = await pool.connect();
@@ -505,10 +502,10 @@ export async function cancelSubscription(req, res) {
     
     const oldBusinessName = businessData.rows[0]?.business_name;
     
-    // Step 1: Delete all users associated with the business
+    // Delete all users associated with the business
     await client.query('DELETE FROM app_user WHERE business_id = $1', [businessId]);
     
-    // Step 2: Anonymize the business data but keep the records
+    // Anonymize the business data but keep the records
     await client.query(`
       UPDATE business 
       SET business_name = 'Anonymous Business', 

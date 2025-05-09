@@ -36,7 +36,7 @@ export async function createSnapshot(req, res) {
     }
     
     const { description } = req.body;
-    const snapshotType = 'manual'; // Manual snapshot created by user
+    const snapshotType = 'manual';
     
     const client = await pool.connect();
     

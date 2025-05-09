@@ -15,7 +15,7 @@ export async function getDashboardData(req, res) {
       );
       const totalItems = parseInt(itemCountResult.rows[0].count);
   
-      // Get space utilization - FIXED column names
+      // Get space utilization
       const spaceResult = await pool.query(
         `SELECT 
           SUM(l.capacity_rsu) as total_capacity,
@@ -31,7 +31,7 @@ export async function getDashboardData(req, res) {
         ? Math.round((totalUsed / totalCapacity) * 100) 
         : 0;
   
-      // Get low stock items count - FIXED column names
+      // Get low stock items count
       const lowStockResult = await pool.query(
         `SELECT COUNT(*) FROM business_item bi
          WHERE bi.business_id = $1
@@ -40,7 +40,7 @@ export async function getDashboardData(req, res) {
       );
       const lowStockItems = parseInt(lowStockResult.rows[0].count);
   
-      // Get total inventory value - FIXED column names
+      // Get total inventory value
       const valueResult = await pool.query(
         `SELECT SUM(bi.quantity_in_stock * bi.cost_price) as total_value
          FROM business_item bi

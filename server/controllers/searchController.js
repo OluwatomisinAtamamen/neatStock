@@ -144,7 +144,7 @@ export async function searchItems(req, res) {
     // Query execution
     const result = await pool.query(sqlQuery, params);
 
-    // Count query for pagination - fixed to include all necessary columns
+    // Count query for pagination
     const countParams = params.slice(0, params.length - 2);
     let countWhereClause = whereClause.replace(/\$\d+/g, (match) => {
       // Adjust param indexes for count query
