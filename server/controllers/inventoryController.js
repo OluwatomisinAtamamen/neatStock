@@ -10,9 +10,25 @@ export async function addItem(req, res) {
     const businessId = req.session.businessId;
     const itemData = req.body;
     let catalogId = itemData.catalogId;
+    let itemId = itemData.itemId;
 
+    // Handle existing inventory item case
+    if (itemData.isExistingInventoryItem && itemId) {
+      console.log("Using existing inventory item:", itemId);
+      // Get the catalogId for this existing item
+      const itemResult = await client.query(`
+        SELECT catalog_id FROM business_item 
+        WHERE item_id = $1 AND business_id = $2
+      `, [itemId, businessId]);
+      
+      if (itemResult.rows.length === 0) {
+        throw new Error('Existing item not found in your inventory');
+      }
+      
+      catalogId = itemResult.rows[0].catalog_id;
+    }
     // If item is completely new (not in catalog yet)
-    if (itemData.isNewCatalogItem) {
+    else if (itemData.isNewCatalogItem) {
       // Create entry in product_catalog first
       const catalogResult = await client.query(`
         INSERT INTO product_catalog (name, description, barcode, pack_size)
@@ -38,6 +54,7 @@ export async function addItem(req, res) {
         throw new Error('Invalid catalog item. Please select a valid item from the catalog or create a new one.');
       }
     } else {
+      console.log("Received item data:", req.body);
       throw new Error('Must either create a new catalog item or select an existing one.');
     }
 
@@ -55,38 +72,39 @@ export async function addItem(req, res) {
       throw new Error('This item already exists in the selected location. Please use the stocktake section to update its quantity.');
     }
 
-    let itemId;
-    
-    const existingItemResult = await client.query(`
-      SELECT item_id 
-      FROM business_item 
-      WHERE business_id = $1 
-      AND catalog_id = $2
-    `, [businessId, catalogId]);
-    
-    if (existingItemResult.rows.length > 0) {
-      itemId = existingItemResult.rows[0].item_id;
-    } else {
-      const newItemResult = await client.query(`
-        INSERT INTO business_item (
-          business_id, catalog_id, category_id, item_name, sku, 
-          unit_price, cost_price, rsu_value, min_stock_level, image_url
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING item_id
-      `, [
-        businessId, 
-        catalogId,
-        itemData.categoryId || null,
-        itemData.name,
-        itemData.sku || null,
-        parseFloat(itemData.unitPrice) || 0,
-        parseFloat(itemData.costPrice) || 0,
-        parseFloat(itemData.rsuValue) || 1,
-        parseInt(itemData.minStockLevel) || 0,
-        itemData.imageUrl || null
-      ]);
+    // If we don't already have an itemId from an existing item
+    if (!itemId) {
+      const existingItemResult = await client.query(`
+        SELECT item_id 
+        FROM business_item 
+        WHERE business_id = $1 
+        AND catalog_id = $2
+      `, [businessId, catalogId]);
       
-      itemId = newItemResult.rows[0].item_id;
+      if (existingItemResult.rows.length > 0) {
+        itemId = existingItemResult.rows[0].item_id;
+      } else {
+        const newItemResult = await client.query(`
+          INSERT INTO business_item (
+            business_id, catalog_id, category_id, item_name, sku, 
+            unit_price, cost_price, rsu_value, min_stock_level, image_url
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          RETURNING item_id
+        `, [
+          businessId, 
+          catalogId,
+          itemData.categoryId || null,
+          itemData.name,
+          itemData.sku || null,
+          parseFloat(itemData.unitPrice) || 0,
+          parseFloat(itemData.costPrice) || 0,
+          parseFloat(itemData.rsuValue) || 1,
+          parseInt(itemData.minStockLevel) || 0,
+          itemData.imageUrl || null
+        ]);
+        
+        itemId = newItemResult.rows[0].item_id;
+      }
     }
     
     // Add the item_location record

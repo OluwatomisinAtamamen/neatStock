@@ -26,6 +26,22 @@ export async function searchItems(req, res) {
     const params = [businessId, `%${query}%`, `%${query}%`];
     let paramIndex = 3;
 
+    // Select appropriate quantity based on locationId
+    let quantitySelector;
+    if (locationId) {
+      paramIndex++;
+      quantitySelector = `
+        COALESCE((
+          SELECT il.quantity 
+          FROM item_location il 
+          WHERE il.item_id = bi.item_id AND il.location_id = $${paramIndex}
+        ), 0) AS quantity
+      `;
+      params.push(locationId);
+    } else {
+      quantitySelector = "bi.quantity_in_stock AS quantity";
+    }
+
     // Main CTE query
     let sqlQuery = `
       WITH inventory_items AS (
@@ -34,7 +50,7 @@ export async function searchItems(req, res) {
           bi.item_name AS name,
           bi.sku,
           pc.barcode,
-          bi.quantity_in_stock AS quantity,
+          ${quantitySelector},
           bi.rsu_value,
           bi.min_stock_level,
           bi.image_url,
@@ -86,7 +102,7 @@ export async function searchItems(req, res) {
     // Filtering
     let whereClause = '';
     if (category) {
-      whereClause += ` AND (category_name = $${++paramIndex}`;
+      whereClause += ` AND (category_name = $${++paramIndex})`;
       params.push(category);
     }
     
@@ -114,12 +130,13 @@ export async function searchItems(req, res) {
         whereClause += ` AND is_from_catalog = TRUE`;
     }
     
+    // Location filter - use existing locationId parameter if it was already added
     if (locationId) {
+      const locationParamIndex = params.indexOf(locationId) + 1;
       whereClause += ` AND (is_from_catalog = TRUE AND EXISTS (
           SELECT 1 FROM item_location il 
-          WHERE il.item_id = id AND il.location_id = $${++paramIndex}
+          WHERE il.item_id = id AND il.location_id = $${locationParamIndex}
       ))`;
-      params.push(locationId);
     }
 
     // Final SELECT
@@ -146,17 +163,29 @@ export async function searchItems(req, res) {
 
     // Count query for pagination
     const countParams = params.slice(0, params.length - 2);
-    let countWhereClause = whereClause.replace(/\$\d+/g, (match) => {
-      // Adjust param indexes for count query
-      const idx = parseInt(match.slice(1));
-      return `$${idx}`;
-    });
+    
+    // Get the count quantity selector
+    let countQuantitySelector;
+    if (locationId) {
+      // Find locationId's position in countParams
+      const locationParamIndex = countParams.indexOf(locationId) + 1;
+      countQuantitySelector = `
+        COALESCE((
+          SELECT il.quantity 
+          FROM item_location il 
+          WHERE il.item_id = bi.item_id AND il.location_id = $${locationParamIndex}
+        ), 0) AS quantity
+      `;
+    } else {
+      countQuantitySelector = "bi.quantity_in_stock AS quantity";
+    }
+    
     const countQuery = `
       WITH inventory_items AS (
         SELECT 
           bi.item_id AS id,
           c.category_name,
-          bi.quantity_in_stock AS quantity,
+          ${countQuantitySelector},
           bi.min_stock_level,
           COALESCE(ARRAY_AGG(DISTINCT l.location_name) FILTER (WHERE l.location_name IS NOT NULL), ARRAY[]::text[]) as locations,
           TRUE AS is_from_catalog
@@ -190,9 +219,8 @@ export async function searchItems(req, res) {
         SELECT * FROM catalog_items
       )
       SELECT COUNT(*) as total_items FROM combined_results
-      WHERE 1=1 ${countWhereClause}
+      WHERE 1=1 ${whereClause}
     `;
-
     
     const countResult = await pool.query(countQuery, countParams);
     const totalItems = parseInt(countResult.rows[0].total_items);
